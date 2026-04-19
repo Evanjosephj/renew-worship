@@ -1,14 +1,11 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-
-const glitter = Array.from({ length: 30 }, (_, i) => ({
-  id: i,
-  left: Math.random() * 100,
-  top: Math.random() * 100,
-  size: Math.random() * 6 + 2,
-  delay: Math.random() * 3,
-}));
+import { FaRegUser, FaRegComment } from 'react-icons/fa';
+import { FiPhone } from 'react-icons/fi';
+import { MdOutlineMan, MdOutlineWoman } from 'react-icons/md';
+import { RiMailLine, RiWhatsappLine, RiCheckboxCircleLine, RiHeartLine } from 'react-icons/ri';
+import { BsCrosshair } from 'react-icons/bs';
 
 export default function UserForm() {
   const [step, setStep] = useState(0);
@@ -46,7 +43,7 @@ export default function UserForm() {
 
   const handleSubmit = async () => {
     try {
-await axios.post('https://renew-worship-backend.onrender.com/api/registration/submit', form);
+      await axios.post('https://renew-worship-backend.onrender.com/api/registration/submit', form);
       setSubmitted(true);
     } catch {
       setError('Something went wrong. Please try again.');
@@ -54,61 +51,74 @@ await axios.post('https://renew-worship-backend.onrender.com/api/registration/su
   };
 
   const slideVariants = {
-    initial: { opacity: 0, x: 100 },
+    initial: { opacity: 0, x: 60 },
     animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -100 }
+    exit: { opacity: 0, x: -60 }
   };
 
   const totalSteps = 6;
 
   return (
     <div style={styles.bg}>
-      {/* Glitters */}
-      {glitter.map(g => (
-        <motion.div key={g.id} style={{
-          position: 'fixed', left: `${g.left}%`, top: `${g.top}%`,
-          width: g.size, height: g.size, borderRadius: '50%',
-          background: `hsl(${Math.random() * 60 + 180}, 100%, 70%)`,
-          pointerEvents: 'none', zIndex: 0
-        }}
-          animate={{ opacity: [0, 1, 0], scale: [0, 1.5, 0] }}
-          transition={{ duration: 2 + g.delay, repeat: Infinity, delay: g.delay }}
-        />
-      ))}
+      <style>{`
+        * { box-sizing: border-box; }
+        input, textarea, button { font-family: inherit; }
+        input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
+        input:focus, textarea:focus { border-color: #a855f7 !important; outline: none; }
+        @media (max-width: 480px) {
+          .form-bigtitle { font-size: 32px !important; }
+          .form-title { font-size: 26px !important; }
+          .form-btn { font-size: 15px !important; padding: 13px 20px !important; }
+          .form-option { font-size: 15px !important; padding: 12px 14px !important; }
+          .form-input { font-size: 16px !important; }
+          .form-inner { padding: 20px 18px 110px 18px !important; }
+        }
+        @media (min-width: 768px) {
+          .form-bigtitle { font-size: 52px !important; }
+          .form-title { font-size: 38px !important; }
+          .form-inner { max-width: 560px !important; }
+        }
+      `}</style>
 
-      <div style={styles.card}>
-        {/* Progress bar */}
-        {!submitted && step > 0 && (
-          <div style={styles.progressBar}>
-            <motion.div style={{ ...styles.progressFill, width: `${(step / totalSteps) * 100}%` }}
-              animate={{ width: `${(step / totalSteps) * 100}%` }} transition={{ duration: 0.4 }} />
-          </div>
-        )}
-
+      <div className="form-inner" style={styles.inner}>
         <AnimatePresence mode="wait">
 
           {/* Step 0 - Welcome */}
           {step === 0 && (
             <motion.div key="welcome" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <div style={styles.cross}>✝</div>
-              <h1 style={styles.title}>Renew Worship</h1>
-              <p style={styles.subtitle}>🙏 Welcome! Please register for the Prayer Meeting</p>
+              <BsCrosshair size={52} color="#a855f7" />
+              <h1 className="form-bigtitle" style={styles.bigTitle}>
+                Renew <span style={styles.grad}>Worship</span>
+              </h1>
+              <p style={styles.subtitle}>Welcome! Please register for the Prayer Meeting</p>
               <p style={styles.desc}>We are glad you are joining us. Click below to begin your registration.</p>
-              <button style={styles.btn} onClick={next}>Begin Registration ✨</button>
+              <button className="form-btn" style={styles.btn} onClick={next}>
+                Begin Registration
+              </button>
             </motion.div>
           )}
 
           {/* Step 1 - Name */}
           {step === 1 && (
             <motion.div key="name" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <div style={styles.stepIcon}>👤</div>
-              <h2 style={styles.label}>What is your name?</h2>
-              <input style={styles.input} placeholder="Enter your full name"
-                value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} />
+              <FaRegUser size={44} color="#a855f7" />
+              <h2 className="form-title" style={styles.title}>
+                What is your <span style={styles.grad}>name?</span>
+              </h2>
+              <div style={styles.inputWrap}>
+                <FaRegUser size={17} color="#a855f7" style={styles.inputIcon} />
+                <input
+                  className="form-input"
+                  style={styles.input}
+                  placeholder="Enter your full name"
+                  value={form.name}
+                  onChange={e => setForm({ ...form, name: e.target.value })}
+                />
+              </div>
               {error && <p style={styles.error}>{error}</p>}
               <div style={styles.row}>
-                <button style={styles.backBtn} onClick={back}>← Back</button>
-                <button style={styles.btn} onClick={handleNext}>Next →</button>
+                <button className="form-btn" style={styles.backBtn} onClick={back}>Back</button>
+                <button className="form-btn" style={styles.btn} onClick={handleNext}>Next</button>
               </div>
             </motion.div>
           )}
@@ -116,18 +126,27 @@ await axios.post('https://renew-worship-backend.onrender.com/api/registration/su
           {/* Step 2 - Gender */}
           {step === 2 && (
             <motion.div key="gender" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <div style={styles.stepIcon}>⚧</div>
-              <h2 style={styles.label}>Select your gender</h2>
+              <h2 className="form-title" style={styles.title}>
+                Select your <span style={styles.grad}>gender</span>
+              </h2>
               <div style={styles.optionRow}>
-                {['Male', 'Female'].map(g => (
-                  <button key={g} style={form.gender === g ? styles.optionActive : styles.option}
-                    onClick={() => setForm({ ...form, gender: g })}>{g}</button>
-                ))}
+                <button
+                  className="form-option"
+                  style={form.gender === 'Male' ? styles.optionActive : styles.option}
+                  onClick={() => setForm({ ...form, gender: 'Male' })}>
+                  <MdOutlineMan size={26} /> Male
+                </button>
+                <button
+                  className="form-option"
+                  style={form.gender === 'Female' ? styles.optionActive : styles.option}
+                  onClick={() => setForm({ ...form, gender: 'Female' })}>
+                  <MdOutlineWoman size={26} /> Female
+                </button>
               </div>
               {error && <p style={styles.error}>{error}</p>}
               <div style={styles.row}>
-                <button style={styles.backBtn} onClick={back}>← Back</button>
-                <button style={styles.btn} onClick={handleNext}>Next →</button>
+                <button className="form-btn" style={styles.backBtn} onClick={back}>Back</button>
+                <button className="form-btn" style={styles.btn} onClick={handleNext}>Next</button>
               </div>
             </motion.div>
           )}
@@ -135,14 +154,25 @@ await axios.post('https://renew-worship-backend.onrender.com/api/registration/su
           {/* Step 3 - Phone */}
           {step === 3 && (
             <motion.div key="phone" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <div style={styles.stepIcon}>📱</div>
-              <h2 style={styles.label}>Your phone number?</h2>
-              <input style={styles.input} placeholder="Enter phone number" type="tel"
-                value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} />
+              <FiPhone size={44} color="#a855f7" />
+              <h2 className="form-title" style={styles.title}>
+                Your <span style={styles.grad}>phone number?</span>
+              </h2>
+              <div style={styles.inputWrap}>
+                <FiPhone size={17} color="#a855f7" style={styles.inputIcon} />
+                <input
+                  className="form-input"
+                  style={styles.input}
+                  placeholder="Enter phone number"
+                  type="tel"
+                  value={form.phone}
+                  onChange={e => setForm({ ...form, phone: e.target.value })}
+                />
+              </div>
               {error && <p style={styles.error}>{error}</p>}
               <div style={styles.row}>
-                <button style={styles.backBtn} onClick={back}>← Back</button>
-                <button style={styles.btn} onClick={handleNext}>Next →</button>
+                <button className="form-btn" style={styles.backBtn} onClick={back}>Back</button>
+                <button className="form-btn" style={styles.btn} onClick={handleNext}>Next</button>
               </div>
             </motion.div>
           )}
@@ -150,39 +180,76 @@ await axios.post('https://renew-worship-backend.onrender.com/api/registration/su
           {/* Step 4 - Update Preference */}
           {step === 4 && (
             <motion.div key="pref" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <div style={styles.stepIcon}>📣</div>
-              <h2 style={styles.label}>How do you want updates?</h2>
+              <h2 className="form-title" style={styles.title}>
+                How do you want <span style={styles.grad}>updates?</span>
+              </h2>
               <div style={styles.optionCol}>
-                {[{ val: 'whatsapp', label: '💬 WhatsApp' }, { val: 'email', label: '📧 Email' }, { val: 'both', label: '✅ Both' }].map(o => (
-                  <button key={o.val} style={form.updatePreference === o.val ? styles.optionActive : styles.option}
-                    onClick={() => setForm({ ...form, updatePreference: o.val, whatsapp: '', email: '' })}>{o.label}</button>
-                ))}
+                <button
+                  className="form-option"
+                  style={form.updatePreference === 'whatsapp' ? styles.optionActive : styles.option}
+                  onClick={() => setForm({ ...form, updatePreference: 'whatsapp', whatsapp: '', email: '' })}>
+                  <RiWhatsappLine size={22} color={form.updatePreference === 'whatsapp' ? '#fff' : '#25D366'} />
+                  WhatsApp
+                </button>
+                <button
+                  className="form-option"
+                  style={form.updatePreference === 'email' ? styles.optionActive : styles.option}
+                  onClick={() => setForm({ ...form, updatePreference: 'email', whatsapp: '', email: '' })}>
+                  <RiMailLine size={22} color={form.updatePreference === 'email' ? '#fff' : '#a855f7'} />
+                  Email
+                </button>
+                <button
+                  className="form-option"
+                  style={form.updatePreference === 'both' ? styles.optionActive : styles.option}
+                  onClick={() => setForm({ ...form, updatePreference: 'both', whatsapp: '', email: '' })}>
+                  <RiCheckboxCircleLine size={22} color={form.updatePreference === 'both' ? '#fff' : '#ec4899'} />
+                  Both
+                </button>
               </div>
               {error && <p style={styles.error}>{error}</p>}
               <div style={styles.row}>
-                <button style={styles.backBtn} onClick={back}>← Back</button>
-                <button style={styles.btn} onClick={handleNext}>Next →</button>
+                <button className="form-btn" style={styles.backBtn} onClick={back}>Back</button>
+                <button className="form-btn" style={styles.btn} onClick={handleNext}>Next</button>
               </div>
             </motion.div>
           )}
 
-          {/* Step 5 - WhatsApp / Email */}
+          {/* Step 5 - Contact Details */}
           {step === 5 && (
             <motion.div key="contact" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <div style={styles.stepIcon}>📋</div>
-              <h2 style={styles.label}>Enter your contact details</h2>
+              <h2 className="form-title" style={styles.title}>
+                Enter your <span style={styles.grad}>contact details</span>
+              </h2>
               {(form.updatePreference === 'whatsapp' || form.updatePreference === 'both') && (
-                <input style={styles.input} placeholder="WhatsApp number" type="tel"
-                  value={form.whatsapp} onChange={e => setForm({ ...form, whatsapp: e.target.value })} />
+                <div style={styles.inputWrap}>
+                  <RiWhatsappLine size={18} color="#25D366" style={styles.inputIcon} />
+                  <input
+                    className="form-input"
+                    style={styles.input}
+                    placeholder="WhatsApp number"
+                    type="tel"
+                    value={form.whatsapp}
+                    onChange={e => setForm({ ...form, whatsapp: e.target.value })}
+                  />
+                </div>
               )}
               {(form.updatePreference === 'email' || form.updatePreference === 'both') && (
-                <input style={{ ...styles.input, marginTop: 12 }} placeholder="Email (@gmail.com)" type="email"
-                  value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} />
+                <div style={styles.inputWrap}>
+                  <RiMailLine size={18} color="#a855f7" style={styles.inputIcon} />
+                  <input
+                    className="form-input"
+                    style={styles.input}
+                    placeholder="Email (@gmail.com)"
+                    type="email"
+                    value={form.email}
+                    onChange={e => setForm({ ...form, email: e.target.value })}
+                  />
+                </div>
               )}
               {error && <p style={styles.error}>{error}</p>}
               <div style={styles.row}>
-                <button style={styles.backBtn} onClick={back}>← Back</button>
-                <button style={styles.btn} onClick={handleNext}>Next →</button>
+                <button className="form-btn" style={styles.backBtn} onClick={back}>Back</button>
+                <button className="form-btn" style={styles.btn} onClick={handleNext}>Next</button>
               </div>
             </motion.div>
           )}
@@ -190,14 +257,24 @@ await axios.post('https://renew-worship-backend.onrender.com/api/registration/su
           {/* Step 6 - Message */}
           {step === 6 && (
             <motion.div key="message" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <div style={styles.stepIcon}>💬</div>
-              <h2 style={styles.label}>Do you want to convey anything?</h2>
-              <textarea style={styles.textarea} placeholder="Your message (optional)"
-                value={form.message} onChange={e => setForm({ ...form, message: e.target.value })} />
+              <FaRegComment size={44} color="#a855f7" />
+              <h2 className="form-title" style={styles.title}>
+                Anything to <span style={styles.grad}>convey?</span>
+              </h2>
+              <div style={styles.inputWrap}>
+                <FaRegComment size={16} color="#a855f7" style={{ ...styles.inputIcon, top: 16 }} />
+                <textarea
+                  className="form-input"
+                  style={{ ...styles.input, minHeight: 120, resize: 'vertical', paddingTop: 14 }}
+                  placeholder="Your message (optional)"
+                  value={form.message}
+                  onChange={e => setForm({ ...form, message: e.target.value })}
+                />
+              </div>
               {error && <p style={styles.error}>{error}</p>}
               <div style={styles.row}>
-                <button style={styles.backBtn} onClick={back}>← Back</button>
-                <button style={styles.btn} onClick={handleNext}>Next →</button>
+                <button className="form-btn" style={styles.backBtn} onClick={back}>Back</button>
+                <button className="form-btn" style={styles.btn} onClick={handleNext}>Next</button>
               </div>
             </motion.div>
           )}
@@ -205,13 +282,15 @@ await axios.post('https://renew-worship-backend.onrender.com/api/registration/su
           {/* Step 7 - Submit */}
           {step === 7 && !submitted && (
             <motion.div key="submit" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <div style={styles.stepIcon}>🙌</div>
-              <h2 style={styles.label}>Almost done!</h2>
+              <RiHeartLine size={52} color="#a855f7" />
+              <h2 className="form-title" style={styles.title}>
+                Almost <span style={styles.grad}>done!</span>
+              </h2>
               <p style={styles.desc}>Thank you for your cooperation. Click below to complete your registration.</p>
               {error && <p style={styles.error}>{error}</p>}
               <div style={styles.row}>
-                <button style={styles.backBtn} onClick={back}>← Back</button>
-                <button style={styles.btn} onClick={handleSubmit}>Submit 🎉</button>
+                <button className="form-btn" style={styles.backBtn} onClick={back}>Back</button>
+                <button className="form-btn" style={styles.btn} onClick={handleSubmit}>Submit</button>
               </div>
             </motion.div>
           )}
@@ -219,83 +298,219 @@ await axios.post('https://renew-worship-backend.onrender.com/api/registration/su
           {/* Thank You */}
           {submitted && (
             <motion.div key="thanks" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <motion.div animate={{ rotate: [0, 10, -10, 0], scale: [1, 1.2, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
-                <div style={{ fontSize: 64 }}>🎊</div>
+              <motion.div animate={{ scale: [1, 1.15, 1] }} transition={{ repeat: Infinity, duration: 2 }}>
+                <RiCheckboxCircleLine size={80} color="#a855f7" />
               </motion.div>
-              <h2 style={{ ...styles.title, fontSize: 24 }}>Thank You!</h2>
-              <p style={styles.desc}>Your details have been saved successfully. God bless you! 🙏</p>
+              <h2 className="form-bigtitle" style={styles.bigTitle}>
+                Thank <span style={styles.grad}>You!</span>
+              </h2>
+              <p style={styles.desc}>Your details have been saved successfully. God bless you!</p>
             </motion.div>
           )}
 
         </AnimatePresence>
       </div>
+
+      {/* Bottom Progress Bar */}
+      {!submitted && step > 0 && (
+        <div style={styles.bottomBar}>
+          <div style={styles.stepText}>Step {step} of {totalSteps}</div>
+          <div style={styles.dotsRow}>
+            {Array.from({ length: totalSteps }).map((_, i) => (
+              <motion.div
+                key={i}
+                style={{
+                  ...styles.dot,
+                  background: i < step
+                    ? 'linear-gradient(90deg, #a855f7, #ec4899)'
+                    : 'rgba(168,85,247,0.2)',
+                }}
+                animate={{ width: i + 1 === step ? 24 : 8 }}
+                transition={{ duration: 0.3 }}
+              />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 const styles = {
   bg: {
-    minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center',
-    background: 'linear-gradient(135deg, #0a0a2e 0%, #0d2137 50%, #0a1a3e 100%)',
-    position: 'relative', overflow: 'hidden', padding: 16
+    minHeight: '100vh',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    background: '#0f0f1a',
+    padding: '24px 20px 110px 20px',
+    position: 'relative',
   },
-  card: {
-    background: 'rgba(255,255,255,0.05)', backdropFilter: 'blur(20px)',
-    border: '1.5px solid rgba(0,255,255,0.3)', borderRadius: 24,
-    padding: '40px 32px', width: '100%', maxWidth: 440,
-    boxShadow: '0 0 40px rgba(0,255,255,0.15), 0 0 80px rgba(0,100,255,0.1)',
-    position: 'relative', zIndex: 1, overflow: 'hidden'
+  inner: {
+    width: '100%',
+    maxWidth: 500,
   },
-  progressBar: {
-    height: 4, background: 'rgba(255,255,255,0.1)', borderRadius: 4,
-    marginBottom: 28, overflow: 'hidden'
+  stepBox: {
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'flex-start',
+    gap: 20,
+    width: '100%',
   },
-  progressFill: {
-    height: '100%', background: 'linear-gradient(90deg, #00ffff, #0080ff)',
-    borderRadius: 4, transition: 'width 0.4s ease'
+  bigTitle: {
+    fontSize: 40,
+    fontWeight: 800,
+    color: '#fff',
+    lineHeight: 1.1,
+    margin: 0,
   },
-  stepBox: { display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 16 },
-  cross: { fontSize: 48, color: '#00ffff', textShadow: '0 0 20px #00ffff' },
-  stepIcon: { fontSize: 48 },
   title: {
-    fontSize: 28, fontWeight: 800, color: '#fff',
-    textAlign: 'center', textShadow: '0 0 20px rgba(0,255,255,0.5)'
+    fontSize: 30,
+    fontWeight: 800,
+    color: '#fff',
+    margin: 0,
+    lineHeight: 1.2,
   },
-  subtitle: { color: '#00ffff', fontSize: 16, textAlign: 'center' },
-  desc: { color: 'rgba(255,255,255,0.7)', fontSize: 14, textAlign: 'center', lineHeight: 1.6 },
-  label: { color: '#fff', fontSize: 20, fontWeight: 700, textAlign: 'center' },
+  grad: {
+    background: 'linear-gradient(90deg, #a855f7, #ec4899)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
+  },
+  subtitle: {
+    color: '#a855f7',
+    fontSize: 16,
+    margin: 0,
+  },
+  desc: {
+    color: 'rgba(255,255,255,0.5)',
+    fontSize: 15,
+    lineHeight: 1.7,
+    margin: 0,
+  },
+  inputWrap: {
+    position: 'relative',
+    width: '100%',
+  },
+  inputIcon: {
+    position: 'absolute',
+    left: 16,
+    top: '50%',
+    transform: 'translateY(-50%)',
+    pointerEvents: 'none',
+  },
   input: {
-    width: '100%', padding: '14px 18px', borderRadius: 12, border: '1.5px solid rgba(0,255,255,0.4)',
-    background: 'rgba(255,255,255,0.07)', color: '#fff', fontSize: 16, outline: 'none',
-    boxShadow: '0 0 10px rgba(0,255,255,0.1)', transition: 'all 0.3s'
-  },
-  textarea: {
-    width: '100%', padding: '14px 18px', borderRadius: 12, border: '1.5px solid rgba(0,255,255,0.4)',
-    background: 'rgba(255,255,255,0.07)', color: '#fff', fontSize: 16, outline: 'none',
-    minHeight: 100, resize: 'vertical', boxShadow: '0 0 10px rgba(0,255,255,0.1)'
+    width: '100%',
+    padding: '15px 18px 15px 46px',
+    borderRadius: 12,
+    border: '1px solid rgba(168,85,247,0.3)',
+    background: 'rgba(168,85,247,0.08)',
+    color: '#fff',
+    fontSize: 16,
+    outline: 'none',
+    boxSizing: 'border-box',
+    WebkitAppearance: 'none',
   },
   btn: {
-    padding: '12px 28px', borderRadius: 12, border: 'none', cursor: 'pointer',
-    background: 'linear-gradient(135deg, #00ffff, #0066ff)',
-    color: '#000', fontWeight: 700, fontSize: 16,
-    boxShadow: '0 0 20px rgba(0,255,255,0.4)', transition: 'all 0.3s'
+    padding: '14px 32px',
+    borderRadius: 12,
+    border: 'none',
+    cursor: 'pointer',
+    background: 'linear-gradient(135deg, #a855f7, #ec4899)',
+    color: '#fff',
+    fontWeight: 700,
+    fontSize: 16,
+    flex: 1,
   },
   backBtn: {
-    padding: '12px 28px', borderRadius: 12, border: '1.5px solid rgba(0,255,255,0.4)',
-    cursor: 'pointer', background: 'transparent', color: '#00ffff', fontWeight: 600, fontSize: 16
+    padding: '14px 24px',
+    borderRadius: 12,
+    border: '1px solid rgba(168,85,247,0.3)',
+    cursor: 'pointer',
+    background: 'transparent',
+    color: 'rgba(255,255,255,0.4)',
+    fontWeight: 600,
+    fontSize: 16,
   },
-  optionRow: { display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' },
-  optionCol: { display: 'flex', flexDirection: 'column', gap: 12, width: '100%' },
+  optionRow: {
+    display: 'flex',
+    gap: 12,
+    width: '100%',
+    flexWrap: 'wrap',
+  },
+  optionCol: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 12,
+    width: '100%',
+  },
   option: {
-    padding: '12px 24px', borderRadius: 12, border: '1.5px solid rgba(0,255,255,0.3)',
-    background: 'rgba(255,255,255,0.05)', color: '#fff', fontSize: 16, cursor: 'pointer', width: '100%'
+    padding: '14px 20px',
+    borderRadius: 12,
+    border: '1px solid rgba(168,85,247,0.25)',
+    background: 'rgba(168,85,247,0.06)',
+    color: 'rgba(255,255,255,0.7)',
+    fontSize: 16,
+    cursor: 'pointer',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    fontWeight: 500,
+    textAlign: 'left',
   },
   optionActive: {
-    padding: '12px 24px', borderRadius: 12, border: '1.5px solid #00ffff',
-    background: 'linear-gradient(135deg, rgba(0,255,255,0.2), rgba(0,100,255,0.2))',
-    color: '#00ffff', fontSize: 16, cursor: 'pointer', fontWeight: 700, width: '100%',
-    boxShadow: '0 0 15px rgba(0,255,255,0.3)'
+    padding: '14px 20px',
+    borderRadius: 12,
+    border: '1px solid #a855f7',
+    background: 'linear-gradient(135deg, rgba(168,85,247,0.25), rgba(236,72,153,0.15))',
+    color: '#fff',
+    fontSize: 16,
+    cursor: 'pointer',
+    width: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+    fontWeight: 700,
+    textAlign: 'left',
   },
-  row: { display: 'flex', gap: 12, justifyContent: 'center', width: '100%', marginTop: 8 },
-  error: { color: '#ff6b6b', fontSize: 13, textAlign: 'center' }
+  row: {
+    display: 'flex',
+    gap: 12,
+    width: '100%',
+    marginTop: 8,
+  },
+  error: {
+    color: '#f87171',
+    fontSize: 13,
+    margin: 0,
+  },
+  bottomBar: {
+    position: 'fixed',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: '16px 24px',
+    background: 'rgba(15,15,26,0.95)',
+    backdropFilter: 'blur(12px)',
+    borderTop: '1px solid rgba(168,85,247,0.15)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    zIndex: 100,
+  },
+  stepText: {
+    color: 'rgba(255,255,255,0.4)',
+    fontSize: 13,
+    fontWeight: 500,
+  },
+  dotsRow: {
+    display: 'flex',
+    gap: 6,
+    alignItems: 'center',
+  },
+  dot: {
+    height: 8,
+    borderRadius: 4,
+    width: 8,
+  },
 };
