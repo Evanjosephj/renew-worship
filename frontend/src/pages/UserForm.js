@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PiCrossBold } from 'react-icons/pi';
-import { RiWhatsappLine, RiMailLine, RiCheckboxCircleLine } from 'react-icons/ri';
+import { RiWhatsappLine, RiMailLine, RiCheckboxCircleLine, RiLoader4Line } from 'react-icons/ri';
 
 export default function UserForm() {
   const [step, setStep] = useState(0);
@@ -12,6 +12,7 @@ export default function UserForm() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false); // NEW
 
   const next = () => { setError(''); setStep(s => s + 1); };
   const back = () => { setError(''); setStep(s => s - 1); };
@@ -42,8 +43,11 @@ export default function UserForm() {
     next();
   };
 
- const handleSubmit = async () => {
+  const handleSubmit = async () => {
+    if (loading) return; // prevent multiple clicks
     try {
+      setLoading(true);
+      setError('');
       await axios.post('https://renew-worship-backend.onrender.com/api/registration/submit', form);
       setSubmitted(true);
     } catch (err) {
@@ -52,6 +56,8 @@ export default function UserForm() {
       } else {
         setError('Something went wrong. Please try again.');
       }
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -70,6 +76,8 @@ export default function UserForm() {
         input, textarea, button { font-family: inherit; }
         input::placeholder, textarea::placeholder { color: rgba(255,255,255,0.3); }
         input:focus, textarea:focus { border-color: #a855f7 !important; outline: none; }
+        @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        .spin { animation: spin 0.8s linear infinite; display: inline-flex; }
         @media (max-width: 480px) {
           .form-bigtitle { font-size: 32px !important; }
           .form-title { font-size: 26px !important; }
@@ -279,8 +287,28 @@ export default function UserForm() {
               <p style={styles.desc}>Thank you for your cooperation. Click below to complete your registration.</p>
               {error && <p style={styles.error}>{error}</p>}
               <div style={styles.row}>
-                <button className="form-btn" style={styles.backBtn} onClick={back}>Back</button>
-                <button className="form-btn" style={styles.btn} onClick={handleSubmit}>Submit</button>
+                <button className="form-btn" style={styles.backBtn} onClick={back} disabled={loading}>Back</button>
+                <button
+                  className="form-btn"
+                  style={{
+                    ...styles.btn,
+                    opacity: loading ? 0.8 : 1,
+                    cursor: loading ? 'not-allowed' : 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: 8,
+                  }}
+                  onClick={handleSubmit}
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <span className="spin"><RiLoader4Line size={20} /></span>
+                      Submitting...
+                    </>
+                  ) : 'Submit'}
+                </button>
               </div>
             </motion.div>
           )}

@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { PiCrossBold } from 'react-icons/pi';
-import { RiSearchLine, RiLogoutBoxLine, RiRefreshLine, RiUserLine, RiMenLine, RiWomenLine, RiWhatsappLine, RiMailLine, RiDownload2Line } from 'react-icons/ri';
+import { RiSearchLine, RiLogoutBoxLine, RiRefreshLine, RiUserLine, RiMenLine, RiWomenLine, RiWhatsappLine, RiMailLine, RiDownload2Line, RiCloseLine, RiMessage2Line } from 'react-icons/ri';
 
 export default function AdminPanel() {
   const [username, setUsername] = useState('');
@@ -11,6 +11,7 @@ export default function AdminPanel() {
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [selectedMsg, setSelectedMsg] = useState(null); // NEW: for modal
 
   const handleLogin = async () => {
     try {
@@ -61,17 +62,11 @@ export default function AdminPanel() {
   const totalWhatsapp = data.filter(r => r.updatePreference === 'whatsapp' || r.updatePreference === 'both').length;
   const totalEmail = data.filter(r => r.updatePreference === 'email' || r.updatePreference === 'both').length;
 
-  // --- CSV DOWNLOAD FEATURE ---
   const downloadCSV = () => {
     const headers = ['No', 'Name', 'Gender', 'Phone No', 'WhatsApp', 'Email', 'Preference', 'Message', 'Registered Date'];
     const rows = filtered.map((row, i) => [
-      i + 1,
-      row.name,
-      row.gender,
-      row.phone,
-      row.whatsapp || '',
-      row.email || '',
-      row.updatePreference,
+      i + 1, row.name, row.gender, row.phone,
+      row.whatsapp || '', row.email || '', row.updatePreference,
       (row.message || '').replace(/,/g, ';'),
       formatDate(row.registeredDate)
     ]);
@@ -92,8 +87,7 @@ export default function AdminPanel() {
     <div style={s.bg}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
-        * { box-sizing: border-box; }
-        body { margin: 0; }
+        * { box-sizing: border-box; } body { margin: 0; }
         input, button { font-family: 'DM Sans', sans-serif; }
         input::placeholder { color: rgba(255,255,255,0.25); }
         input:focus { border-color: rgba(168,85,247,0.7) !important; outline: none; box-shadow: 0 0 0 3px rgba(168,85,247,0.12); }
@@ -128,8 +122,7 @@ export default function AdminPanel() {
     <div style={s.bg}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
-        * { box-sizing: border-box; }
-        body { margin: 0; }
+        * { box-sizing: border-box; } body { margin: 0; }
         input, button { font-family: 'DM Sans', sans-serif; }
         input::placeholder { color: rgba(255,255,255,0.25); }
         input:focus { border-color: rgba(168,85,247,0.6) !important; outline: none; }
@@ -141,13 +134,16 @@ export default function AdminPanel() {
         .dl-btn:hover { background: rgba(168,85,247,0.2) !important; }
         .ref-btn:hover { background: rgba(168,85,247,0.15) !important; }
         .out-btn:hover { background: rgba(236,72,153,0.15) !important; }
+        .msg-cell:hover { color: #a855f7 !important; cursor: pointer; text-decoration: underline; }
         @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes slideUp { from { opacity:0; transform:translateY(30px);} to { opacity:1; transform:translateY(0);} }
         .dash-body { animation: fadeIn 0.4s ease; }
+        .modal-box { animation: slideUp 0.25s ease; }
       `}</style>
 
       <div className="dash-body" style={s.dash}>
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div style={s.header}>
           <div style={s.headerLeft}>
             <div style={s.crossWrap}><PiCrossBold size={16} color="#a855f7" /></div>
@@ -157,18 +153,18 @@ export default function AdminPanel() {
             </div>
           </div>
           <div style={s.headerRight}>
-            <button className="ref-btn" style={s.iconBtn} onClick={fetchData} title="Refresh">
+            <button className="ref-btn" style={s.iconBtn} onClick={fetchData}>
               <RiRefreshLine size={16} color="#a855f7" />
               <span style={s.btnLabel}>{loading ? '...' : 'Refresh'}</span>
             </button>
-            <button className="out-btn" style={{ ...s.iconBtn, borderColor: 'rgba(236,72,153,0.3)' }} onClick={handleLogout} title="Logout">
+            <button className="out-btn" style={{ ...s.iconBtn, borderColor: 'rgba(236,72,153,0.3)' }} onClick={handleLogout}>
               <RiLogoutBoxLine size={16} color="#ec4899" />
               <span style={{ ...s.btnLabel, color: '#ec4899' }}>Logout</span>
             </button>
           </div>
         </div>
 
-        {/* ── Stats Row ── */}
+        {/* Stats */}
         <div style={s.statsRow}>
           {[
             { icon: <RiUserLine size={14} color="#a855f7" />, val: data.length, label: 'Total', accent: '#a855f7' },
@@ -185,30 +181,24 @@ export default function AdminPanel() {
           ))}
         </div>
 
-        {/* ── Search + Download Bar ── */}
+        {/* Toolbar */}
         <div style={s.toolbar}>
           <div style={s.searchBox}>
             <RiSearchLine size={14} color="rgba(168,85,247,0.6)" style={{ flexShrink: 0 }} />
-            <input
-              style={s.searchInput}
-              placeholder="Search name or phone..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-            />
+            <input style={s.searchInput} placeholder="Search name or phone..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <button className="dl-btn" style={s.dlBtn} onClick={downloadCSV} title="Download CSV">
+          <button className="dl-btn" style={s.dlBtn} onClick={downloadCSV}>
             <RiDownload2Line size={15} color="#a855f7" />
             <span style={s.btnLabel}>Export CSV</span>
           </button>
         </div>
 
         {error && <p style={s.error}>{error}</p>}
-
         <p style={s.countLine}>
           Showing <strong style={{ color: '#a855f7' }}>{filtered.length}</strong> of {data.length} registrations
         </p>
 
-        {/* ── Table ── */}
+        {/* Table */}
         <div style={s.tableWrap}>
           <table style={s.table}>
             <thead>
@@ -220,11 +210,7 @@ export default function AdminPanel() {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan="9" style={{ ...s.td, textAlign: 'center', color: 'rgba(255,255,255,0.2)', padding: '36px' }}>
-                    No registrations found
-                  </td>
-                </tr>
+                <tr><td colSpan="9" style={{ ...s.td, textAlign: 'center', color: 'rgba(255,255,255,0.2)', padding: '36px' }}>No registrations found</td></tr>
               ) : filtered.map((row, i) => (
                 <tr key={row._id}>
                   <td style={{ ...s.td, color: 'rgba(255,255,255,0.3)', width: 32 }}>{i + 1}</td>
@@ -235,16 +221,12 @@ export default function AdminPanel() {
                       background: row.gender === 'Male' ? 'rgba(96,165,250,0.12)' : 'rgba(236,72,153,0.12)',
                       color: row.gender === 'Male' ? '#60a5fa' : '#ec4899',
                       border: `1px solid ${row.gender === 'Male' ? 'rgba(96,165,250,0.25)' : 'rgba(236,72,153,0.25)'}`,
-                    }}>
-                      {row.gender}
-                    </span>
+                    }}>{row.gender}</span>
                   </td>
                   <td style={{ ...s.td, whiteSpace: 'nowrap' }}>{row.phone}</td>
                   <td style={s.td}>
                     {row.whatsapp
-                      ? <span style={{ color: '#25D366', display: 'flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}>
-                          <RiWhatsappLine size={12} />{row.whatsapp}
-                        </span>
+                      ? <span style={{ color: '#25D366', display: 'flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}><RiWhatsappLine size={12} />{row.whatsapp}</span>
                       : <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>}
                   </td>
                   <td style={s.td}>
@@ -252,21 +234,50 @@ export default function AdminPanel() {
                       ? <span style={{ color: '#f59e0b', fontSize: 11 }}>{row.email}</span>
                       : <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>}
                   </td>
-                  <td style={s.td}>
-                    <span style={s.prefBadge}>{row.updatePreference}</span>
+                  <td style={s.td}><span style={s.prefBadge}>{row.updatePreference}</span></td>
+
+                  {/* MESSAGE CELL — click to open modal */}
+                  <td
+                    className="msg-cell"
+                    style={{ ...s.td, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', cursor: row.message ? 'pointer' : 'default' }}
+                    onClick={() => row.message && setSelectedMsg({ name: row.name, message: row.message })}
+                    title={row.message ? 'Click to read full message' : ''}
+                  >
+                    {row.message
+                      ? <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <RiMessage2Line size={12} color="#a855f7" />
+                          {row.message}
+                        </span>
+                      : <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>}
                   </td>
-                  <td style={{ ...s.td, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {row.message || <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>}
-                  </td>
-                  <td style={{ ...s.td, whiteSpace: 'nowrap', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
-                    {formatDate(row.registeredDate)}
-                  </td>
+
+                  <td style={{ ...s.td, whiteSpace: 'nowrap', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>{formatDate(row.registeredDate)}</td>
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* MESSAGE MODAL */}
+      {selectedMsg && (
+        <div style={s.modalOverlay} onClick={() => setSelectedMsg(null)}>
+          <div className="modal-box" style={s.modalBox} onClick={e => e.stopPropagation()}>
+            <div style={s.modalHeader}>
+              <div style={s.modalTitle}>
+                <RiMessage2Line size={16} color="#a855f7" />
+                <span>Message from <strong style={{ color: '#fff' }}>{selectedMsg.name}</strong></span>
+              </div>
+              <button style={s.closeBtn} onClick={() => setSelectedMsg(null)}>
+                <RiCloseLine size={20} color="rgba(255,255,255,0.5)" />
+              </button>
+            </div>
+            <div style={s.modalBody}>
+              {selectedMsg.message}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -279,286 +290,81 @@ const s = {
     padding: '16px',
     fontFamily: "'DM Sans', sans-serif",
   },
+  loginWrap: { maxWidth: 380, margin: '48px auto 0', display: 'flex', flexDirection: 'column', gap: 14 },
+  loginLogo: { display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 },
+  loginBrand: { fontFamily: "'Syne', sans-serif", fontSize: 18, fontWeight: 700, color: '#fff' },
+  loginHeading: { fontFamily: "'Syne', sans-serif", fontSize: 28, fontWeight: 800, color: '#fff', margin: 0 },
+  loginSub: { fontSize: 13, color: 'rgba(255,255,255,0.35)', margin: '0 0 6px' },
+  fieldGroup: { display: 'flex', flexDirection: 'column', gap: 6 },
+  label: { fontSize: 12, fontWeight: 600, color: 'rgba(255,255,255,0.45)', letterSpacing: 0.4, textTransform: 'uppercase' },
+  input: { padding: '12px 14px', borderRadius: 10, border: '1px solid rgba(168,85,247,0.25)', background: 'rgba(168,85,247,0.07)', color: '#fff', fontSize: 14, outline: 'none' },
+  loginBtn: { padding: '13px', borderRadius: 10, border: 'none', cursor: 'pointer', background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)', color: '#fff', fontWeight: 700, fontSize: 15, marginTop: 4 },
+  dash: { maxWidth: 1280, margin: '0 auto' },
+  header: { display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20, flexWrap: 'wrap', gap: 10 },
+  headerLeft: { display: 'flex', alignItems: 'center', gap: 10 },
+  crossWrap: { width: 34, height: 34, borderRadius: 9, background: 'rgba(168,85,247,0.12)', border: '1px solid rgba(168,85,247,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 },
+  brandName: { fontFamily: "'Syne', sans-serif", fontSize: 17, fontWeight: 800, color: '#fff', lineHeight: 1.2 },
+  brandSub: { fontSize: 11, color: 'rgba(255,255,255,0.3)', letterSpacing: 0.3 },
+  headerRight: { display: 'flex', gap: 8, alignItems: 'center' },
+  iconBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '7px 12px', borderRadius: 8, border: '1px solid rgba(168,85,247,0.25)', background: 'rgba(168,85,247,0.07)', cursor: 'pointer' },
+  btnLabel: { fontSize: 12, fontWeight: 600, color: '#a855f7' },
+  statsRow: { display: 'flex', gap: 8, marginBottom: 16, flexWrap: 'wrap' },
+  statPill: { flex: '1 1 0', minWidth: 64, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4, padding: '10px 8px', borderRadius: 10, border: '1px solid rgba(168,85,247,0.15)', background: 'rgba(255,255,255,0.03)', cursor: 'default' },
+  statIcon: { width: 26, height: 26, borderRadius: 7, display: 'flex', alignItems: 'center', justifyContent: 'center' },
+  statVal: { fontSize: 20, fontWeight: 800, color: '#fff', fontFamily: "'Syne', sans-serif", lineHeight: 1 },
+  statLbl: { fontSize: 10, color: 'rgba(255,255,255,0.35)', fontWeight: 600, letterSpacing: 0.3, textTransform: 'uppercase' },
+  toolbar: { display: 'flex', gap: 8, marginBottom: 10, alignItems: 'center', flexWrap: 'wrap' },
+  searchBox: { display: 'flex', alignItems: 'center', gap: 8, flex: 1, minWidth: 180, padding: '9px 12px', borderRadius: 9, border: '1px solid rgba(168,85,247,0.22)', background: 'rgba(168,85,247,0.06)' },
+  searchInput: { flex: 1, background: 'none', border: 'none', outline: 'none', color: '#fff', fontSize: 13, padding: 0 },
+  dlBtn: { display: 'flex', alignItems: 'center', gap: 5, padding: '9px 14px', borderRadius: 9, border: '1px solid rgba(168,85,247,0.3)', background: 'rgba(168,85,247,0.08)', cursor: 'pointer', whiteSpace: 'nowrap', flexShrink: 0 },
+  countLine: { fontSize: 12, color: 'rgba(255,255,255,0.3)', marginBottom: 10 },
+  error: { color: '#f87171', fontSize: 12, margin: '0 0 8px' },
+  tableWrap: { overflowX: 'auto', borderRadius: 12, border: '1px solid rgba(168,85,247,0.12)', background: 'rgba(255,255,255,0.02)' },
+  table: { width: '100%', borderCollapse: 'collapse', minWidth: 820 },
+  th: { padding: '11px 14px', textAlign: 'left', color: 'rgba(255,255,255,0.35)', fontWeight: 600, fontSize: 11, letterSpacing: 0.6, textTransform: 'uppercase', background: 'rgba(168,85,247,0.06)', borderBottom: '1px solid rgba(168,85,247,0.1)', whiteSpace: 'nowrap' },
+  td: { padding: '11px 14px', color: 'rgba(255,255,255,0.6)', fontSize: 13, borderBottom: '1px solid rgba(255,255,255,0.03)' },
+  badge: { padding: '3px 8px', borderRadius: 5, fontSize: 11, fontWeight: 600, whiteSpace: 'nowrap' },
+  prefBadge: { background: 'rgba(168,85,247,0.12)', color: '#a855f7', padding: '3px 8px', borderRadius: 5, fontSize: 11, fontWeight: 600, border: '1px solid rgba(168,85,247,0.2)', whiteSpace: 'nowrap' },
+  grad: { background: 'linear-gradient(90deg, #a855f7, #ec4899)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' },
 
-  // LOGIN
-  loginWrap: {
-    maxWidth: 380,
-    margin: '48px auto 0',
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 14,
+  // MODAL
+  modalOverlay: {
+    position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
+    background: 'rgba(0,0,0,0.6)',
+    backdropFilter: 'blur(4px)',
+    display: 'flex', alignItems: 'center', justifyContent: 'center',
+    zIndex: 1000, padding: '20px',
   },
-  loginLogo: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 4,
-  },
-  loginBrand: {
-    fontFamily: "'Syne', sans-serif",
-    fontSize: 18,
-    fontWeight: 700,
-    color: '#fff',
-  },
-  loginHeading: {
-    fontFamily: "'Syne', sans-serif",
-    fontSize: 28,
-    fontWeight: 800,
-    color: '#fff',
-    margin: 0,
-  },
-  loginSub: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.35)',
-    margin: '0 0 6px',
-  },
-  fieldGroup: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: 6,
-  },
-  label: {
-    fontSize: 12,
-    fontWeight: 600,
-    color: 'rgba(255,255,255,0.45)',
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-  },
-  input: {
-    padding: '12px 14px',
-    borderRadius: 10,
+  modalBox: {
+    background: '#13131f',
     border: '1px solid rgba(168,85,247,0.25)',
-    background: 'rgba(168,85,247,0.07)',
-    color: '#fff',
-    fontSize: 14,
-    outline: 'none',
-    transition: 'border-color 0.2s',
-  },
-  loginBtn: {
-    padding: '13px',
-    borderRadius: 10,
-    border: 'none',
-    cursor: 'pointer',
-    background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
-    color: '#fff',
-    fontWeight: 700,
-    fontSize: 15,
-    marginTop: 4,
-    letterSpacing: 0.3,
-  },
-
-  // DASHBOARD
-  dash: {
-    maxWidth: 1280,
-    margin: '0 auto',
-  },
-  header: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 20,
-    flexWrap: 'wrap',
-    gap: 10,
-  },
-  headerLeft: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 10,
-  },
-  crossWrap: {
-    width: 34,
-    height: 34,
-    borderRadius: 9,
-    background: 'rgba(168,85,247,0.12)',
-    border: '1px solid rgba(168,85,247,0.2)',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    flexShrink: 0,
-  },
-  brandName: {
-    fontFamily: "'Syne', sans-serif",
-    fontSize: 17,
-    fontWeight: 800,
-    color: '#fff',
-    lineHeight: 1.2,
-  },
-  brandSub: {
-    fontSize: 11,
-    color: 'rgba(255,255,255,0.3)',
-    letterSpacing: 0.3,
-  },
-  headerRight: {
-    display: 'flex',
-    gap: 8,
-    alignItems: 'center',
-  },
-  iconBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 5,
-    padding: '7px 12px',
-    borderRadius: 8,
-    border: '1px solid rgba(168,85,247,0.25)',
-    background: 'rgba(168,85,247,0.07)',
-    cursor: 'pointer',
-    transition: 'background 0.2s',
-  },
-  btnLabel: {
-    fontSize: 12,
-    fontWeight: 600,
-    color: '#a855f7',
-  },
-
-  // STATS — compact horizontal pills
-  statsRow: {
-    display: 'flex',
-    gap: 8,
-    marginBottom: 16,
-    flexWrap: 'wrap',
-  },
-  statPill: {
-    flex: '1 1 0',
-    minWidth: 64,
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 4,
-    padding: '10px 8px',
-    borderRadius: 10,
-    border: '1px solid rgba(168,85,247,0.15)',
-    background: 'rgba(255,255,255,0.03)',
-    cursor: 'default',
-    transition: 'transform 0.2s ease',
-  },
-  statIcon: {
-    width: 26,
-    height: 26,
-    borderRadius: 7,
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  statVal: {
-    fontSize: 20,
-    fontWeight: 800,
-    color: '#fff',
-    fontFamily: "'Syne', sans-serif",
-    lineHeight: 1,
-  },
-  statLbl: {
-    fontSize: 10,
-    color: 'rgba(255,255,255,0.35)',
-    fontWeight: 600,
-    letterSpacing: 0.3,
-    textTransform: 'uppercase',
-  },
-
-  // TOOLBAR
-  toolbar: {
-    display: 'flex',
-    gap: 8,
-    marginBottom: 10,
-    alignItems: 'center',
-    flexWrap: 'wrap',
-  },
-  searchBox: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 8,
-    flex: 1,
-    minWidth: 180,
-    padding: '9px 12px',
-    borderRadius: 9,
-    border: '1px solid rgba(168,85,247,0.22)',
-    background: 'rgba(168,85,247,0.06)',
-  },
-  searchInput: {
-    flex: 1,
-    background: 'none',
-    border: 'none',
-    outline: 'none',
-    color: '#fff',
-    fontSize: 13,
-    padding: 0,
-  },
-  dlBtn: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: 5,
-    padding: '9px 14px',
-    borderRadius: 9,
-    border: '1px solid rgba(168,85,247,0.3)',
-    background: 'rgba(168,85,247,0.08)',
-    cursor: 'pointer',
-    transition: 'background 0.2s',
-    whiteSpace: 'nowrap',
-    flexShrink: 0,
-  },
-
-  countLine: {
-    fontSize: 12,
-    color: 'rgba(255,255,255,0.3)',
-    marginBottom: 10,
-  },
-  error: {
-    color: '#f87171',
-    fontSize: 12,
-    margin: '0 0 8px',
-  },
-
-  // TABLE
-  tableWrap: {
-    overflowX: 'auto',
-    borderRadius: 12,
-    border: '1px solid rgba(168,85,247,0.12)',
-    background: 'rgba(255,255,255,0.02)',
-  },
-  table: {
+    borderRadius: 16,
     width: '100%',
-    borderCollapse: 'collapse',
-    minWidth: 820,
+    maxWidth: 420,
+    overflow: 'hidden',
   },
-  th: {
-    padding: '11px 14px',
-    textAlign: 'left',
-    color: 'rgba(255,255,255,0.35)',
-    fontWeight: 600,
-    fontSize: 11,
-    letterSpacing: 0.6,
-    textTransform: 'uppercase',
+  modalHeader: {
+    display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    padding: '14px 18px',
+    borderBottom: '1px solid rgba(168,85,247,0.12)',
     background: 'rgba(168,85,247,0.06)',
-    borderBottom: '1px solid rgba(168,85,247,0.1)',
-    whiteSpace: 'nowrap',
+  },
+  modalTitle: {
+    display: 'flex', alignItems: 'center', gap: 8,
+    fontSize: 13, color: 'rgba(255,255,255,0.5)',
     fontFamily: "'DM Sans', sans-serif",
   },
-  td: {
-    padding: '11px 14px',
-    color: 'rgba(255,255,255,0.6)',
-    fontSize: 13,
-    borderBottom: '1px solid rgba(255,255,255,0.03)',
+  closeBtn: {
+    background: 'none', border: 'none', cursor: 'pointer',
+    display: 'flex', alignItems: 'center', padding: 4, borderRadius: 6,
+  },
+  modalBody: {
+    padding: '20px 18px',
+    fontSize: 15,
+    color: 'rgba(255,255,255,0.85)',
+    lineHeight: 1.7,
     fontFamily: "'DM Sans', sans-serif",
-  },
-  badge: {
-    padding: '3px 8px',
-    borderRadius: 5,
-    fontSize: 11,
-    fontWeight: 600,
-    whiteSpace: 'nowrap',
-  },
-  prefBadge: {
-    background: 'rgba(168,85,247,0.12)',
-    color: '#a855f7',
-    padding: '3px 8px',
-    borderRadius: 5,
-    fontSize: 11,
-    fontWeight: 600,
-    border: '1px solid rgba(168,85,247,0.2)',
-    whiteSpace: 'nowrap',
-  },
-  grad: {
-    background: 'linear-gradient(90deg, #a855f7, #ec4899)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
+    whiteSpace: 'pre-wrap',
+    wordBreak: 'break-word',
   },
 };
