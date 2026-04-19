@@ -38,7 +38,7 @@ export default function AdminPanel() {
 
   useEffect(() => {
     if (token) fetchData();
-  }, [token]);
+  }, [token, fetchData]);
 
   const handleLogout = () => {
     localStorage.removeItem('adminToken');

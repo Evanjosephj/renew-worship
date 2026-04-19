@@ -59,7 +59,6 @@ await axios.post('https://renew-worship-backend.onrender.com/api/registration/su
     exit: { opacity: 0, x: -100 }
   };
 
-  const steps = [0, 1, 2, 3, 4, 5, 6, 7];
   const totalSteps = 6;
 
   return (
