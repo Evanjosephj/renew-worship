@@ -323,6 +323,13 @@ export default function UserForm() {
                 Thank <span style={styles.grad}>You!</span>
               </h2>
               <p style={styles.desc}>Your details have been saved successfully. God bless you!</p>
+<motion.p
+  style={{ ...styles.desc, color: '#a855f7', fontWeight: 600 }}
+  animate={{ scale: [0.8, 1.1, 1] }}
+  transition={{ duration: 0.6, delay: 0.3 }}
+>
+  We will see you soon! <PiCrossBold size={14} color="#a855f7" style={{ display: 'inline', verticalAlign: 'middle' }} />
+</motion.p>
             </motion.div>
           )}
 
