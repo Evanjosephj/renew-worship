@@ -12,7 +12,7 @@ export default function AdminPanel() {
   const handleLogin = async () => {
     try {
       setError('');
-      const res = await axios.post('http://localhost:5000/api/admin/login', { username, password });
+      const res = await axios.post('https://renew-worship-backend.onrender.com/api/admin/login', { username, password });
       localStorage.setItem('adminToken', res.data.token);
       setToken(res.data.token);
     } catch {
@@ -23,7 +23,7 @@ export default function AdminPanel() {
   const fetchData = async () => {
     try {
       setLoading(true);
-      const res = await axios.get('http://localhost:5000/api/admin/registrations', {
+      const res = await axios.get('https://renew-worship-backend.onrender.com/api/admin/registrations', {
         headers: { Authorization: `Bearer ${token}` }
       });
       setData(res.data.data);

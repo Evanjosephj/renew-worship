@@ -46,7 +46,7 @@ export default function UserForm() {
 
   const handleSubmit = async () => {
     try {
-      await axios.post('http://localhost:5000/api/registration/submit', form);
+await axios.post('https://renew-worship-backend.onrender.com/api/registration/submit', form);
       setSubmitted(true);
     } catch {
       setError('Something went wrong. Please try again.');
