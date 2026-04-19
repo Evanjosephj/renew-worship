@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { PiCrossBold } from 'react-icons/pi';
-import { RiSearchLine, RiLogoutBoxLine, RiRefreshLine, RiUserLine, RiMenLine, RiWomenLine, RiWhatsappLine, RiMailLine } from 'react-icons/ri';
+import { RiSearchLine, RiLogoutBoxLine, RiRefreshLine, RiUserLine, RiMenLine, RiWomenLine, RiWhatsappLine, RiMailLine, RiDownload2Line } from 'react-icons/ri';
 
 export default function AdminPanel() {
   const [username, setUsername] = useState('');
@@ -61,198 +61,208 @@ export default function AdminPanel() {
   const totalWhatsapp = data.filter(r => r.updatePreference === 'whatsapp' || r.updatePreference === 'both').length;
   const totalEmail = data.filter(r => r.updatePreference === 'email' || r.updatePreference === 'both').length;
 
+  // --- CSV DOWNLOAD FEATURE ---
+  const downloadCSV = () => {
+    const headers = ['No', 'Name', 'Gender', 'Phone No', 'WhatsApp', 'Email', 'Preference', 'Message', 'Registered Date'];
+    const rows = filtered.map((row, i) => [
+      i + 1,
+      row.name,
+      row.gender,
+      row.phone,
+      row.whatsapp || '',
+      row.email || '',
+      row.updatePreference,
+      (row.message || '').replace(/,/g, ';'),
+      formatDate(row.registeredDate)
+    ]);
+    const csvContent = [headers, ...rows].map(r => r.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `renew-worship-registrations-${Date.now()}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // LOGIN PAGE
   if (!token) return (
-    <div style={styles.bg}>
+    <div style={s.bg}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
         * { box-sizing: border-box; }
-        input, button { font-family: inherit; }
-        input::placeholder { color: rgba(255,255,255,0.3); }
-        input:focus { border-color: #a855f7 !important; outline: none; }
-        @media (max-width: 480px) {
-          .login-title { font-size: 28px !important; }
-        }
+        body { margin: 0; }
+        input, button { font-family: 'DM Sans', sans-serif; }
+        input::placeholder { color: rgba(255,255,255,0.25); }
+        input:focus { border-color: rgba(168,85,247,0.7) !important; outline: none; box-shadow: 0 0 0 3px rgba(168,85,247,0.12); }
+        .login-wrap { animation: fadeUp 0.5s ease both; }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(20px);} to { opacity:1; transform:translateY(0);} }
       `}</style>
-      <div style={styles.loginCard}>
-        <PiCrossBold size={48} color="#a855f7" />
-        <h1 className="login-title" style={styles.loginTitle}>
-          Admin <span style={styles.grad}>Login</span>
-        </h1>
-        <p style={styles.loginSub}>Renew Worship Dashboard</p>
-        <input
-          style={styles.input}
-          placeholder="Username"
-          value={username}
-          onChange={e => setUsername(e.target.value)}
-        />
-        <input
-          style={styles.input}
-          placeholder="Password"
-          type="password"
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          onKeyDown={e => e.key === 'Enter' && handleLogin()}
-        />
-        {error && <p style={styles.error}>{error}</p>}
-        <button style={styles.btn} onClick={handleLogin}>Login</button>
+      <div className="login-wrap" style={s.loginWrap}>
+        <div style={s.loginLogo}>
+          <PiCrossBold size={22} color="#a855f7" />
+          <span style={s.loginBrand}>Renew <span style={s.grad}>Worship</span></span>
+        </div>
+        <h2 style={s.loginHeading}>Welcome back</h2>
+        <p style={s.loginSub}>Sign in to the admin dashboard</p>
+        <div style={s.fieldGroup}>
+          <label style={s.label}>Username</label>
+          <input style={s.input} placeholder="Enter username" value={username} onChange={e => setUsername(e.target.value)} />
+        </div>
+        <div style={s.fieldGroup}>
+          <label style={s.label}>Password</label>
+          <input style={s.input} placeholder="Enter password" type="password" value={password}
+            onChange={e => setPassword(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleLogin()} />
+        </div>
+        {error && <p style={s.error}>{error}</p>}
+        <button style={s.loginBtn} onClick={handleLogin}>Sign In →</button>
       </div>
     </div>
   );
 
   // DASHBOARD
   return (
-    <div style={styles.bg}>
+    <div style={s.bg}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@400;500;600&display=swap');
         * { box-sizing: border-box; }
-        input, button { font-family: inherit; }
-        input::placeholder { color: rgba(255,255,255,0.3); }
-        input:focus { border-color: #a855f7 !important; outline: none; }
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(168,85,247,0.05); }
-        ::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.3); border-radius: 4px; }
-        @media (max-width: 768px) {
-          .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
-          .dash-title { font-size: 22px !important; }
-          .top-bar { flex-direction: column !important; align-items: flex-start !important; gap: 12px !important; }
-        }
-        @media (max-width: 480px) {
-          .stat-grid { grid-template-columns: repeat(2, 1fr) !important; }
-        }
+        body { margin: 0; }
+        input, button { font-family: 'DM Sans', sans-serif; }
+        input::placeholder { color: rgba(255,255,255,0.25); }
+        input:focus { border-color: rgba(168,85,247,0.6) !important; outline: none; }
+        ::-webkit-scrollbar { width: 4px; height: 4px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(168,85,247,0.25); border-radius: 4px; }
+        .stat-pill:hover { transform: translateY(-2px); transition: transform 0.2s ease; }
+        tr:hover td { background: rgba(168,85,247,0.06) !important; }
+        .dl-btn:hover { background: rgba(168,85,247,0.2) !important; }
+        .ref-btn:hover { background: rgba(168,85,247,0.15) !important; }
+        .out-btn:hover { background: rgba(236,72,153,0.15) !important; }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        .dash-body { animation: fadeIn 0.4s ease; }
       `}</style>
 
-      <div style={styles.dashboard}>
+      <div className="dash-body" style={s.dash}>
 
-        {/* Header */}
-        <div className="top-bar" style={styles.topBar}>
-          <div style={styles.topLeft}>
-            <PiCrossBold size={28} color="#a855f7" />
+        {/* ── Header ── */}
+        <div style={s.header}>
+          <div style={s.headerLeft}>
+            <div style={s.crossWrap}><PiCrossBold size={16} color="#a855f7" /></div>
             <div>
-              <h1 className="dash-title" style={styles.dashTitle}>
-                Renew <span style={styles.grad}>Worship</span>
-              </h1>
-              <p style={styles.dashSub}>Registration Dashboard</p>
+              <div style={s.brandName}>Renew <span style={s.grad}>Worship</span></div>
+              <div style={s.brandSub}>Registration Dashboard</div>
             </div>
           </div>
-          <div style={styles.topRight}>
-            <button style={styles.refreshBtn} onClick={fetchData}>
-              <RiRefreshLine size={18} />
-              {loading ? 'Loading...' : 'Refresh'}
+          <div style={s.headerRight}>
+            <button className="ref-btn" style={s.iconBtn} onClick={fetchData} title="Refresh">
+              <RiRefreshLine size={16} color="#a855f7" />
+              <span style={s.btnLabel}>{loading ? '...' : 'Refresh'}</span>
             </button>
-            <button style={styles.logoutBtn} onClick={handleLogout}>
-              <RiLogoutBoxLine size={18} />
-              Logout
+            <button className="out-btn" style={{ ...s.iconBtn, borderColor: 'rgba(236,72,153,0.3)' }} onClick={handleLogout} title="Logout">
+              <RiLogoutBoxLine size={16} color="#ec4899" />
+              <span style={{ ...s.btnLabel, color: '#ec4899' }}>Logout</span>
             </button>
           </div>
         </div>
 
-        {/* Stat Cards */}
-        <div className="stat-grid" style={styles.statGrid}>
-          <div style={styles.statCard}>
-            <RiUserLine size={24} color="#a855f7" />
-            <div style={styles.statNum}>{data.length}</div>
-            <div style={styles.statLabel}>Total</div>
-          </div>
-          <div style={styles.statCard}>
-            <RiMenLine size={24} color="#60a5fa" />
-            <div style={styles.statNum}>{totalMale}</div>
-            <div style={styles.statLabel}>Male</div>
-          </div>
-          <div style={styles.statCard}>
-            <RiWomenLine size={24} color="#ec4899" />
-            <div style={styles.statNum}>{totalFemale}</div>
-            <div style={styles.statLabel}>Female</div>
-          </div>
-          <div style={styles.statCard}>
-            <RiWhatsappLine size={24} color="#25D366" />
-            <div style={styles.statNum}>{totalWhatsapp}</div>
-            <div style={styles.statLabel}>WhatsApp</div>
-          </div>
-          <div style={styles.statCard}>
-            <RiMailLine size={24} color="#f59e0b" />
-            <div style={styles.statNum}>{totalEmail}</div>
-            <div style={styles.statLabel}>Email</div>
-          </div>
+        {/* ── Stats Row ── */}
+        <div style={s.statsRow}>
+          {[
+            { icon: <RiUserLine size={14} color="#a855f7" />, val: data.length, label: 'Total', accent: '#a855f7' },
+            { icon: <RiMenLine size={14} color="#60a5fa" />, val: totalMale, label: 'Male', accent: '#60a5fa' },
+            { icon: <RiWomenLine size={14} color="#ec4899" />, val: totalFemale, label: 'Female', accent: '#ec4899' },
+            { icon: <RiWhatsappLine size={14} color="#25D366" />, val: totalWhatsapp, label: 'WhatsApp', accent: '#25D366' },
+            { icon: <RiMailLine size={14} color="#f59e0b" />, val: totalEmail, label: 'Email', accent: '#f59e0b' },
+          ].map(({ icon, val, label, accent }) => (
+            <div className="stat-pill" key={label} style={{ ...s.statPill, borderColor: `${accent}25` }}>
+              <div style={{ ...s.statIcon, background: `${accent}18` }}>{icon}</div>
+              <div style={s.statVal}>{val}</div>
+              <div style={s.statLbl}>{label}</div>
+            </div>
+          ))}
         </div>
 
-        {/* Search */}
-        <div style={styles.searchWrap}>
-          <RiSearchLine size={18} color="#a855f7" style={styles.searchIcon} />
-          <input
-            style={styles.searchInput}
-            placeholder="Search by name or phone..."
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+        {/* ── Search + Download Bar ── */}
+        <div style={s.toolbar}>
+          <div style={s.searchBox}>
+            <RiSearchLine size={14} color="rgba(168,85,247,0.6)" style={{ flexShrink: 0 }} />
+            <input
+              style={s.searchInput}
+              placeholder="Search name or phone..."
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+            />
+          </div>
+          <button className="dl-btn" style={s.dlBtn} onClick={downloadCSV} title="Download CSV">
+            <RiDownload2Line size={15} color="#a855f7" />
+            <span style={s.btnLabel}>Export CSV</span>
+          </button>
         </div>
 
-        {error && <p style={styles.error}>{error}</p>}
+        {error && <p style={s.error}>{error}</p>}
 
-        {/* Results count */}
-        <p style={styles.resultCount}>
-          Showing <span style={{ color: '#a855f7', fontWeight: 700 }}>{filtered.length}</span> of {data.length} registrations
+        <p style={s.countLine}>
+          Showing <strong style={{ color: '#a855f7' }}>{filtered.length}</strong> of {data.length} registrations
         </p>
 
-        {/* Table */}
-        <div style={styles.tableWrapper}>
-          <table style={styles.table}>
+        {/* ── Table ── */}
+        <div style={s.tableWrap}>
+          <table style={s.table}>
             <thead>
               <tr>
-                {['No', 'Name', 'Gender', 'Phone No', 'WhatsApp', 'Email', 'Preference', 'Message', 'Registered Date'].map(h => (
-                  <th key={h} style={styles.th}>{h}</th>
+                {['#', 'Name', 'Gender', 'Phone', 'WhatsApp', 'Email', 'Pref', 'Message', 'Date'].map(h => (
+                  <th key={h} style={s.th}>{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 ? (
                 <tr>
-                  <td colSpan="9" style={{ ...styles.td, textAlign: 'center', color: 'rgba(255,255,255,0.3)', padding: '40px' }}>
+                  <td colSpan="9" style={{ ...s.td, textAlign: 'center', color: 'rgba(255,255,255,0.2)', padding: '36px' }}>
                     No registrations found
                   </td>
                 </tr>
-              ) : (
-                filtered.map((row, i) => (
-                  <tr key={row._id}
-                    style={{ background: i % 2 === 0 ? 'rgba(168,85,247,0.03)' : 'transparent' }}
-                    onMouseEnter={e => e.currentTarget.style.background = 'rgba(168,85,247,0.08)'}
-                    onMouseLeave={e => e.currentTarget.style.background = i % 2 === 0 ? 'rgba(168,85,247,0.03)' : 'transparent'}
-                  >
-                    <td style={styles.td}>{i + 1}</td>
-                    <td style={{ ...styles.td, fontWeight: 600, color: '#fff' }}>{row.name}</td>
-                    <td style={styles.td}>
-                      <span style={{
-                        ...styles.badge,
-                        background: row.gender === 'Male' ? 'rgba(96,165,250,0.15)' : 'rgba(236,72,153,0.15)',
-                        color: row.gender === 'Male' ? '#60a5fa' : '#ec4899',
-                        border: `1px solid ${row.gender === 'Male' ? 'rgba(96,165,250,0.3)' : 'rgba(236,72,153,0.3)'}`,
-                      }}>
-                        {row.gender}
-                      </span>
-                    </td>
-                    <td style={styles.td}>{row.phone}</td>
-                    <td style={styles.td}>
-                      {row.whatsapp
-                        ? <span style={{ color: '#25D366', fontWeight: 600, display: 'flex', alignItems: 'center', gap: 4 }}>
-                            <RiWhatsappLine size={14} /> {row.whatsapp}
-                          </span>
-                        : <span style={{ color: 'rgba(255,255,255,0.2)' }}>—</span>
-                      }
-                    </td>
-                    <td style={styles.td}>
-                      {row.email
-                        ? <span style={{ color: '#f59e0b', fontSize: 12 }}>{row.email}</span>
-                        : <span style={{ color: 'rgba(255,255,255,0.2)' }}>—</span>
-                      }
-                    </td>
-                    <td style={styles.td}>
-                      <span style={styles.prefBadge}>{row.updatePreference}</span>
-                    </td>
-                    <td style={{ ...styles.td, maxWidth: 160, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {row.message || <span style={{ color: 'rgba(255,255,255,0.2)' }}>—</span>}
-                    </td>
-                    <td style={{ ...styles.td, whiteSpace: 'nowrap', fontSize: 12 }}>{formatDate(row.registeredDate)}</td>
-                  </tr>
-                ))
-              )}
+              ) : filtered.map((row, i) => (
+                <tr key={row._id}>
+                  <td style={{ ...s.td, color: 'rgba(255,255,255,0.3)', width: 32 }}>{i + 1}</td>
+                  <td style={{ ...s.td, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap' }}>{row.name}</td>
+                  <td style={s.td}>
+                    <span style={{
+                      ...s.badge,
+                      background: row.gender === 'Male' ? 'rgba(96,165,250,0.12)' : 'rgba(236,72,153,0.12)',
+                      color: row.gender === 'Male' ? '#60a5fa' : '#ec4899',
+                      border: `1px solid ${row.gender === 'Male' ? 'rgba(96,165,250,0.25)' : 'rgba(236,72,153,0.25)'}`,
+                    }}>
+                      {row.gender}
+                    </span>
+                  </td>
+                  <td style={{ ...s.td, whiteSpace: 'nowrap' }}>{row.phone}</td>
+                  <td style={s.td}>
+                    {row.whatsapp
+                      ? <span style={{ color: '#25D366', display: 'flex', alignItems: 'center', gap: 3, whiteSpace: 'nowrap' }}>
+                          <RiWhatsappLine size={12} />{row.whatsapp}
+                        </span>
+                      : <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>}
+                  </td>
+                  <td style={s.td}>
+                    {row.email
+                      ? <span style={{ color: '#f59e0b', fontSize: 11 }}>{row.email}</span>
+                      : <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>}
+                  </td>
+                  <td style={s.td}>
+                    <span style={s.prefBadge}>{row.updatePreference}</span>
+                  </td>
+                  <td style={{ ...s.td, maxWidth: 140, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {row.message || <span style={{ color: 'rgba(255,255,255,0.15)' }}>—</span>}
+                  </td>
+                  <td style={{ ...s.td, whiteSpace: 'nowrap', fontSize: 11, color: 'rgba(255,255,255,0.4)' }}>
+                    {formatDate(row.registeredDate)}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
@@ -261,221 +271,294 @@ export default function AdminPanel() {
   );
 }
 
-const styles = {
+const s = {
   bg: {
     minHeight: '100vh',
-    background: '#0f0f1a',
-    padding: '24px 20px',
-    display: 'flex',
-    alignItems: 'flex-start',
-    justifyContent: 'center',
+    background: '#0c0c18',
+    backgroundImage: 'radial-gradient(ellipse 60% 40% at 50% -10%, rgba(168,85,247,0.08) 0%, transparent 70%)',
+    padding: '16px',
+    fontFamily: "'DM Sans', sans-serif",
   },
-  loginCard: {
-    marginTop: 80,
+
+  // LOGIN
+  loginWrap: {
+    maxWidth: 380,
+    margin: '48px auto 0',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: 16,
-    width: '100%',
-    maxWidth: 420,
-  },
-  loginTitle: {
-    fontSize: 36,
-    fontWeight: 800,
-    color: '#fff',
-    margin: 0,
-  },
-  loginSub: {
-    color: 'rgba(255,255,255,0.4)',
-    fontSize: 14,
-    margin: 0,
-  },
-  grad: {
-    background: 'linear-gradient(90deg, #a855f7, #ec4899)',
-    WebkitBackgroundClip: 'text',
-    WebkitTextFillColor: 'transparent',
-  },
-  input: {
-    width: '100%',
-    padding: '15px 18px',
-    borderRadius: 12,
-    border: '1px solid rgba(168,85,247,0.3)',
-    background: 'rgba(168,85,247,0.08)',
-    color: '#fff',
-    fontSize: 16,
-    outline: 'none',
-  },
-  btn: {
-    width: '100%',
-    padding: '15px',
-    borderRadius: 12,
-    border: 'none',
-    cursor: 'pointer',
-    background: 'linear-gradient(135deg, #a855f7, #ec4899)',
-    color: '#fff',
-    fontWeight: 700,
-    fontSize: 16,
-  },
-  error: {
-    color: '#f87171',
-    fontSize: 13,
-    margin: 0,
-  },
-  dashboard: {
-    width: '100%',
-    maxWidth: 1300,
-  },
-  topBar: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 28,
-    gap: 16,
-  },
-  topLeft: {
-    display: 'flex',
-    alignItems: 'center',
     gap: 14,
   },
-  dashTitle: {
+  loginLogo: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 4,
+  },
+  loginBrand: {
+    fontFamily: "'Syne', sans-serif",
+    fontSize: 18,
+    fontWeight: 700,
+    color: '#fff',
+  },
+  loginHeading: {
+    fontFamily: "'Syne', sans-serif",
     fontSize: 28,
     fontWeight: 800,
     color: '#fff',
     margin: 0,
   },
-  dashSub: {
-    color: 'rgba(255,255,255,0.35)',
+  loginSub: {
     fontSize: 13,
-    margin: 0,
+    color: 'rgba(255,255,255,0.35)',
+    margin: '0 0 6px',
   },
-  topRight: {
-    display: 'flex',
-    gap: 10,
-    alignItems: 'center',
-  },
-  refreshBtn: {
-    padding: '10px 18px',
-    borderRadius: 10,
-    border: '1px solid rgba(168,85,247,0.3)',
-    cursor: 'pointer',
-    background: 'rgba(168,85,247,0.08)',
-    color: '#a855f7',
-    fontWeight: 600,
-    fontSize: 14,
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-  },
-  logoutBtn: {
-    padding: '10px 18px',
-    borderRadius: 10,
-    border: '1px solid rgba(236,72,153,0.3)',
-    cursor: 'pointer',
-    background: 'rgba(236,72,153,0.08)',
-    color: '#ec4899',
-    fontWeight: 600,
-    fontSize: 14,
-    display: 'flex',
-    alignItems: 'center',
-    gap: 6,
-  },
-  statGrid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(5, 1fr)',
-    gap: 14,
-    marginBottom: 24,
-  },
-  statCard: {
-    padding: '20px 16px',
-    borderRadius: 14,
-    border: '1px solid rgba(168,85,247,0.2)',
-    background: 'rgba(168,85,247,0.06)',
+  fieldGroup: {
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'flex-start',
-    gap: 8,
+    gap: 6,
   },
-  statNum: {
-    fontSize: 32,
+  label: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: 'rgba(255,255,255,0.45)',
+    letterSpacing: 0.4,
+    textTransform: 'uppercase',
+  },
+  input: {
+    padding: '12px 14px',
+    borderRadius: 10,
+    border: '1px solid rgba(168,85,247,0.25)',
+    background: 'rgba(168,85,247,0.07)',
+    color: '#fff',
+    fontSize: 14,
+    outline: 'none',
+    transition: 'border-color 0.2s',
+  },
+  loginBtn: {
+    padding: '13px',
+    borderRadius: 10,
+    border: 'none',
+    cursor: 'pointer',
+    background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+    color: '#fff',
+    fontWeight: 700,
+    fontSize: 15,
+    marginTop: 4,
+    letterSpacing: 0.3,
+  },
+
+  // DASHBOARD
+  dash: {
+    maxWidth: 1280,
+    margin: '0 auto',
+  },
+  header: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 10,
+  },
+  crossWrap: {
+    width: 34,
+    height: 34,
+    borderRadius: 9,
+    background: 'rgba(168,85,247,0.12)',
+    border: '1px solid rgba(168,85,247,0.2)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  brandName: {
+    fontFamily: "'Syne', sans-serif",
+    fontSize: 17,
     fontWeight: 800,
     color: '#fff',
+    lineHeight: 1.2,
+  },
+  brandSub: {
+    fontSize: 11,
+    color: 'rgba(255,255,255,0.3)',
+    letterSpacing: 0.3,
+  },
+  headerRight: {
+    display: 'flex',
+    gap: 8,
+    alignItems: 'center',
+  },
+  iconBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '7px 12px',
+    borderRadius: 8,
+    border: '1px solid rgba(168,85,247,0.25)',
+    background: 'rgba(168,85,247,0.07)',
+    cursor: 'pointer',
+    transition: 'background 0.2s',
+  },
+  btnLabel: {
+    fontSize: 12,
+    fontWeight: 600,
+    color: '#a855f7',
+  },
+
+  // STATS — compact horizontal pills
+  statsRow: {
+    display: 'flex',
+    gap: 8,
+    marginBottom: 16,
+    flexWrap: 'wrap',
+  },
+  statPill: {
+    flex: '1 1 0',
+    minWidth: 64,
+    display: 'flex',
+    flexDirection: 'column',
+    alignItems: 'center',
+    gap: 4,
+    padding: '10px 8px',
+    borderRadius: 10,
+    border: '1px solid rgba(168,85,247,0.15)',
+    background: 'rgba(255,255,255,0.03)',
+    cursor: 'default',
+    transition: 'transform 0.2s ease',
+  },
+  statIcon: {
+    width: 26,
+    height: 26,
+    borderRadius: 7,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statVal: {
+    fontSize: 20,
+    fontWeight: 800,
+    color: '#fff',
+    fontFamily: "'Syne', sans-serif",
     lineHeight: 1,
   },
-  statLabel: {
-    fontSize: 13,
-    color: 'rgba(255,255,255,0.4)',
-    fontWeight: 500,
+  statLbl: {
+    fontSize: 10,
+    color: 'rgba(255,255,255,0.35)',
+    fontWeight: 600,
+    letterSpacing: 0.3,
+    textTransform: 'uppercase',
   },
-  searchWrap: {
-    position: 'relative',
-    marginBottom: 12,
-    width: '100%',
-    maxWidth: 400,
+
+  // TOOLBAR
+  toolbar: {
+    display: 'flex',
+    gap: 8,
+    marginBottom: 10,
+    alignItems: 'center',
+    flexWrap: 'wrap',
   },
-  searchIcon: {
-    position: 'absolute',
-    left: 14,
-    top: '50%',
-    transform: 'translateY(-50%)',
-    pointerEvents: 'none',
+  searchBox: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    flex: 1,
+    minWidth: 180,
+    padding: '9px 12px',
+    borderRadius: 9,
+    border: '1px solid rgba(168,85,247,0.22)',
+    background: 'rgba(168,85,247,0.06)',
   },
   searchInput: {
-    width: '100%',
-    padding: '12px 18px 12px 42px',
-    borderRadius: 10,
+    flex: 1,
+    background: 'none',
+    border: 'none',
+    outline: 'none',
+    color: '#fff',
+    fontSize: 13,
+    padding: 0,
+  },
+  dlBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 5,
+    padding: '9px 14px',
+    borderRadius: 9,
     border: '1px solid rgba(168,85,247,0.3)',
     background: 'rgba(168,85,247,0.08)',
-    color: '#fff',
-    fontSize: 15,
-    outline: 'none',
-    boxSizing: 'border-box',
+    cursor: 'pointer',
+    transition: 'background 0.2s',
+    whiteSpace: 'nowrap',
+    flexShrink: 0,
   },
-  resultCount: {
-    color: 'rgba(255,255,255,0.35)',
-    fontSize: 13,
-    marginBottom: 14,
+
+  countLine: {
+    fontSize: 12,
+    color: 'rgba(255,255,255,0.3)',
+    marginBottom: 10,
   },
-  tableWrapper: {
+  error: {
+    color: '#f87171',
+    fontSize: 12,
+    margin: '0 0 8px',
+  },
+
+  // TABLE
+  tableWrap: {
     overflowX: 'auto',
-    borderRadius: 14,
-    border: '1px solid rgba(168,85,247,0.15)',
+    borderRadius: 12,
+    border: '1px solid rgba(168,85,247,0.12)',
+    background: 'rgba(255,255,255,0.02)',
   },
   table: {
     width: '100%',
     borderCollapse: 'collapse',
-    minWidth: 900,
+    minWidth: 820,
   },
   th: {
-    padding: '14px 16px',
+    padding: '11px 14px',
     textAlign: 'left',
-    color: 'rgba(255,255,255,0.4)',
+    color: 'rgba(255,255,255,0.35)',
     fontWeight: 600,
-    fontSize: 12,
-    letterSpacing: 0.5,
+    fontSize: 11,
+    letterSpacing: 0.6,
     textTransform: 'uppercase',
-    background: 'rgba(168,85,247,0.08)',
-    borderBottom: '1px solid rgba(168,85,247,0.15)',
+    background: 'rgba(168,85,247,0.06)',
+    borderBottom: '1px solid rgba(168,85,247,0.1)',
     whiteSpace: 'nowrap',
+    fontFamily: "'DM Sans', sans-serif",
   },
   td: {
-    padding: '14px 16px',
-    color: 'rgba(255,255,255,0.7)',
-    fontSize: 14,
-    borderBottom: '1px solid rgba(255,255,255,0.04)',
+    padding: '11px 14px',
+    color: 'rgba(255,255,255,0.6)',
+    fontSize: 13,
+    borderBottom: '1px solid rgba(255,255,255,0.03)',
+    fontFamily: "'DM Sans', sans-serif",
   },
   badge: {
-    padding: '4px 10px',
-    borderRadius: 6,
-    fontSize: 12,
+    padding: '3px 8px',
+    borderRadius: 5,
+    fontSize: 11,
     fontWeight: 600,
+    whiteSpace: 'nowrap',
   },
   prefBadge: {
-    background: 'rgba(168,85,247,0.15)',
+    background: 'rgba(168,85,247,0.12)',
     color: '#a855f7',
-    padding: '4px 10px',
-    borderRadius: 6,
-    fontSize: 12,
+    padding: '3px 8px',
+    borderRadius: 5,
+    fontSize: 11,
     fontWeight: 600,
-    border: '1px solid rgba(168,85,247,0.25)',
+    border: '1px solid rgba(168,85,247,0.2)',
+    whiteSpace: 'nowrap',
+  },
+  grad: {
+    background: 'linear-gradient(90deg, #a855f7, #ec4899)',
+    WebkitBackgroundClip: 'text',
+    WebkitTextFillColor: 'transparent',
   },
 };
