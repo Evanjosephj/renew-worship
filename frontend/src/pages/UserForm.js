@@ -1,11 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
-import { FaRegUser, FaRegComment } from 'react-icons/fa';
-import { FiPhone } from 'react-icons/fi';
-import { MdOutlineMan, MdOutlineWoman } from 'react-icons/md';
-import { RiMailLine, RiWhatsappLine, RiCheckboxCircleLine, RiHeartLine } from 'react-icons/ri';
-import { BsCrosshair } from 'react-icons/bs';
+import { PiCrossBold } from 'react-icons/pi';
+import { RiWhatsappLine, RiMailLine, RiCheckboxCircleLine } from 'react-icons/ri';
 
 export default function UserForm() {
   const [step, setStep] = useState(0);
@@ -21,12 +18,16 @@ export default function UserForm() {
 
   const validate = () => {
     if (step === 1 && !form.name.trim()) return 'Please enter your name';
+    if (step === 1 && /[0-9]/.test(form.name)) return 'Name should contain letters only';
     if (step === 2 && !form.gender) return 'Please select your gender';
     if (step === 3 && !form.phone.trim()) return 'Please enter your phone number';
+    if (step === 3 && form.phone.length < 10) return 'Please enter a valid 10 digit phone number';
     if (step === 4 && !form.updatePreference) return 'Please select an option';
     if (step === 5) {
       if ((form.updatePreference === 'whatsapp' || form.updatePreference === 'both') && !form.whatsapp.trim())
         return 'Please enter your WhatsApp number';
+      if ((form.updatePreference === 'whatsapp' || form.updatePreference === 'both') && form.whatsapp.length < 10)
+        return 'Please enter a valid 10 digit WhatsApp number';
       if ((form.updatePreference === 'email' || form.updatePreference === 'both') && !form.email.trim())
         return 'Please enter your email';
       if ((form.updatePreference === 'email' || form.updatePreference === 'both') && !form.email.endsWith('@gmail.com'))
@@ -71,22 +72,20 @@ export default function UserForm() {
           .form-btn { font-size: 15px !important; padding: 13px 20px !important; }
           .form-option { font-size: 15px !important; padding: 12px 14px !important; }
           .form-input { font-size: 16px !important; }
-          .form-inner { padding: 20px 18px 110px 18px !important; }
         }
         @media (min-width: 768px) {
           .form-bigtitle { font-size: 52px !important; }
           .form-title { font-size: 38px !important; }
-          .form-inner { max-width: 560px !important; }
         }
       `}</style>
 
-      <div className="form-inner" style={styles.inner}>
+      <div style={styles.inner}>
         <AnimatePresence mode="wait">
 
           {/* Step 0 - Welcome */}
           {step === 0 && (
             <motion.div key="welcome" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <BsCrosshair size={52} color="#a855f7" />
+              <PiCrossBold size={52} color="#a855f7" />
               <h1 className="form-bigtitle" style={styles.bigTitle}>
                 Renew <span style={styles.grad}>Worship</span>
               </h1>
@@ -101,20 +100,19 @@ export default function UserForm() {
           {/* Step 1 - Name */}
           {step === 1 && (
             <motion.div key="name" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <FaRegUser size={44} color="#a855f7" />
               <h2 className="form-title" style={styles.title}>
                 What is your <span style={styles.grad}>name?</span>
               </h2>
-              <div style={styles.inputWrap}>
-                <FaRegUser size={17} color="#a855f7" style={styles.inputIcon} />
-                <input
-                  className="form-input"
-                  style={styles.input}
-                  placeholder="Enter your full name"
-                  value={form.name}
-                  onChange={e => setForm({ ...form, name: e.target.value })}
-                />
-              </div>
+              <input
+                className="form-input"
+                style={styles.input}
+                placeholder="Enter your full name"
+                value={form.name}
+                onChange={e => {
+                  const val = e.target.value.replace(/[^a-zA-Z\s]/g, '');
+                  setForm({ ...form, name: val });
+                }}
+              />
               {error && <p style={styles.error}>{error}</p>}
               <div style={styles.row}>
                 <button className="form-btn" style={styles.backBtn} onClick={back}>Back</button>
@@ -134,13 +132,13 @@ export default function UserForm() {
                   className="form-option"
                   style={form.gender === 'Male' ? styles.optionActive : styles.option}
                   onClick={() => setForm({ ...form, gender: 'Male' })}>
-                  <MdOutlineMan size={26} /> Male
+                  Male
                 </button>
                 <button
                   className="form-option"
                   style={form.gender === 'Female' ? styles.optionActive : styles.option}
                   onClick={() => setForm({ ...form, gender: 'Female' })}>
-                  <MdOutlineWoman size={26} /> Female
+                  Female
                 </button>
               </div>
               {error && <p style={styles.error}>{error}</p>}
@@ -154,21 +152,18 @@ export default function UserForm() {
           {/* Step 3 - Phone */}
           {step === 3 && (
             <motion.div key="phone" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <FiPhone size={44} color="#a855f7" />
               <h2 className="form-title" style={styles.title}>
                 Your <span style={styles.grad}>phone number?</span>
               </h2>
-              <div style={styles.inputWrap}>
-                <FiPhone size={17} color="#a855f7" style={styles.inputIcon} />
-                <input
-                  className="form-input"
-                  style={styles.input}
-                  placeholder="Enter phone number"
-                  type="tel"
-                  value={form.phone}
-                  onChange={e => setForm({ ...form, phone: e.target.value })}
-                />
-              </div>
+              <input
+                className="form-input"
+                style={styles.input}
+                placeholder="Enter 10 digit phone number"
+                type="tel"
+                maxLength={10}
+                value={form.phone}
+                onChange={e => setForm({ ...form, phone: e.target.value.replace(/[^0-9]/g, '') })}
+              />
               {error && <p style={styles.error}>{error}</p>}
               <div style={styles.row}>
                 <button className="form-btn" style={styles.backBtn} onClick={back}>Back</button>
@@ -221,30 +216,25 @@ export default function UserForm() {
                 Enter your <span style={styles.grad}>contact details</span>
               </h2>
               {(form.updatePreference === 'whatsapp' || form.updatePreference === 'both') && (
-                <div style={styles.inputWrap}>
-                  <RiWhatsappLine size={18} color="#25D366" style={styles.inputIcon} />
-                  <input
-                    className="form-input"
-                    style={styles.input}
-                    placeholder="WhatsApp number"
-                    type="tel"
-                    value={form.whatsapp}
-                    onChange={e => setForm({ ...form, whatsapp: e.target.value })}
-                  />
-                </div>
+                <input
+                  className="form-input"
+                  style={styles.input}
+                  placeholder="WhatsApp number (10 digits)"
+                  type="tel"
+                  maxLength={10}
+                  value={form.whatsapp}
+                  onChange={e => setForm({ ...form, whatsapp: e.target.value.replace(/[^0-9]/g, '') })}
+                />
               )}
               {(form.updatePreference === 'email' || form.updatePreference === 'both') && (
-                <div style={styles.inputWrap}>
-                  <RiMailLine size={18} color="#a855f7" style={styles.inputIcon} />
-                  <input
-                    className="form-input"
-                    style={styles.input}
-                    placeholder="Email (@gmail.com)"
-                    type="email"
-                    value={form.email}
-                    onChange={e => setForm({ ...form, email: e.target.value })}
-                  />
-                </div>
+                <input
+                  className="form-input"
+                  style={styles.input}
+                  placeholder="Email (@gmail.com)"
+                  type="email"
+                  value={form.email}
+                  onChange={e => setForm({ ...form, email: e.target.value })}
+                />
               )}
               {error && <p style={styles.error}>{error}</p>}
               <div style={styles.row}>
@@ -257,20 +247,16 @@ export default function UserForm() {
           {/* Step 6 - Message */}
           {step === 6 && (
             <motion.div key="message" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <FaRegComment size={44} color="#a855f7" />
               <h2 className="form-title" style={styles.title}>
                 Anything to <span style={styles.grad}>convey?</span>
               </h2>
-              <div style={styles.inputWrap}>
-                <FaRegComment size={16} color="#a855f7" style={{ ...styles.inputIcon, top: 16 }} />
-                <textarea
-                  className="form-input"
-                  style={{ ...styles.input, minHeight: 120, resize: 'vertical', paddingTop: 14 }}
-                  placeholder="Your message (optional)"
-                  value={form.message}
-                  onChange={e => setForm({ ...form, message: e.target.value })}
-                />
-              </div>
+              <textarea
+                className="form-input"
+                style={{ ...styles.input, minHeight: 120, resize: 'vertical', paddingTop: 14 }}
+                placeholder="Your message (optional)"
+                value={form.message}
+                onChange={e => setForm({ ...form, message: e.target.value })}
+              />
               {error && <p style={styles.error}>{error}</p>}
               <div style={styles.row}>
                 <button className="form-btn" style={styles.backBtn} onClick={back}>Back</button>
@@ -282,7 +268,7 @@ export default function UserForm() {
           {/* Step 7 - Submit */}
           {step === 7 && !submitted && (
             <motion.div key="submit" variants={slideVariants} initial="initial" animate="animate" exit="exit" style={styles.stepBox}>
-              <RiHeartLine size={52} color="#a855f7" />
+              <PiCrossBold size={52} color="#a855f7" />
               <h2 className="form-title" style={styles.title}>
                 Almost <span style={styles.grad}>done!</span>
               </h2>
@@ -387,20 +373,9 @@ const styles = {
     lineHeight: 1.7,
     margin: 0,
   },
-  inputWrap: {
-    position: 'relative',
-    width: '100%',
-  },
-  inputIcon: {
-    position: 'absolute',
-    left: 16,
-    top: '50%',
-    transform: 'translateY(-50%)',
-    pointerEvents: 'none',
-  },
   input: {
     width: '100%',
-    padding: '15px 18px 15px 46px',
+    padding: '15px 18px',
     borderRadius: 12,
     border: '1px solid rgba(168,85,247,0.3)',
     background: 'rgba(168,85,247,0.08)',
