@@ -398,7 +398,7 @@ export default function AdminPanel() {
           <table style={s.table}>
             <thead>
               <tr>
-                {['#', 'Name', 'Gender', 'Phone', 'WhatsApp', 'Email', 'Pref', 'Message', 'Date'].map(h => (
+                {['No', 'Name', 'Gender', 'Phone', 'WhatsApp', 'Email', 'Pref', 'Message', 'Date'].map(h => (
                   <th key={h} style={s.th}>{h}</th>
                 ))}
               </tr>
