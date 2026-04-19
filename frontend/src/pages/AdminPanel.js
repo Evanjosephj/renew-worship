@@ -102,79 +102,83 @@ export default function AdminPanel() {
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
       const pageW = doc.internal.pageSize.getWidth();
       const pageH = doc.internal.pageSize.getHeight();
-
-      // ── Dark header bar ──────────────────────────────────────
-      doc.setFillColor(12, 12, 24);
-      doc.rect(0, 0, pageW, 24, 'F');
-
-      // Purple accent left stripe
-      doc.setFillColor(168, 85, 247);
-      doc.rect(0, 0, 3, 24, 'F');
-
-      // Brand name
-      doc.setFont('helvetica', 'bold');
-      doc.setFontSize(15);
-      doc.setTextColor(168, 85, 247);
-      doc.text('Renew Worship', 10, 15);
-
-      // Subtitle
-      doc.setFontSize(8);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(160, 160, 180);
-      doc.text('Registration Report', 10, 21);
-
-      // Timestamp top right
       const now = new Date().toLocaleString('en-IN');
-      doc.setFontSize(8);
-      doc.setTextColor(120, 120, 140);
-      doc.text(`Generated: ${now}`, pageW - 8, 12, { align: 'right' });
-      doc.text(`Total Records: ${filtered.length}`, pageW - 8, 20, { align: 'right' });
 
-      // ── Stats boxes row ──────────────────────────────────────
+      // ── Pure white background ─────────────────────────────────
+      doc.setFillColor(255, 255, 255);
+      doc.rect(0, 0, pageW, pageH, 'F');
+
+      // ── Top purple accent bar (thin) ──────────────────────────
+      doc.setFillColor(109, 40, 217);
+      doc.rect(0, 0, pageW, 5, 'F');
+
+      // ── Organisation name ─────────────────────────────────────
+      doc.setFont('helvetica', 'bold');
+      doc.setFontSize(20);
+      doc.setTextColor(80, 20, 180);
+      doc.text('Renew Worship', 12, 18);
+
+      doc.setFont('helvetica', 'normal');
+      doc.setFontSize(9);
+      doc.setTextColor(90, 90, 90);
+      doc.text('Registration Report', 12, 25);
+
+      // Thin divider
+      doc.setDrawColor(210, 210, 220);
+      doc.setLineWidth(0.3);
+      doc.line(12, 28, pageW - 12, 28);
+
+      // Top-right: date + record count
+      doc.setFontSize(8);
+      doc.setTextColor(110, 110, 110);
+      doc.text(`Downloaded: ${now}`, pageW - 12, 17, { align: 'right' });
+      doc.text(`Total Records: ${filtered.length}`, pageW - 12, 24, { align: 'right' });
+
+      // ── Summary stats boxes (white bg, black text, gray border) ─
       const statsData = [
-        { label: 'TOTAL', val: data.length, r: 168, g: 85, b: 247 },
-        { label: 'MALE', val: totalMale, r: 96, g: 165, b: 250 },
-        { label: 'FEMALE', val: totalFemale, r: 236, g: 72, b: 153 },
-        { label: 'WHATSAPP', val: totalWhatsapp, r: 37, g: 211, b: 102 },
-        { label: 'EMAIL', val: totalEmail, r: 245, g: 158, b: 11 },
-        { label: 'SHOWING', val: filtered.length, r: 168, g: 85, b: 247 },
+        { label: 'Total',    val: data.length },
+        { label: 'Male',     val: totalMale },
+        { label: 'Female',   val: totalFemale },
+        { label: 'WhatsApp', val: totalWhatsapp },
+        { label: 'Email',    val: totalEmail },
+        { label: 'Showing',  val: filtered.length },
       ];
 
-      const boxW = 42, boxH = 16, startY = 28, startX = 8, gap = 3.5;
-      statsData.forEach(({ label, val, r, g, b }, i) => {
+      const boxW = 42, boxH = 18, boxY = 32, startX = 12, gap = 3.4;
+      statsData.forEach(({ label, val }, i) => {
         const x = startX + i * (boxW + gap);
-        // Box background
-        doc.setFillColor(20, 15, 35);
-        doc.setDrawColor(r, g, b);
+        doc.setFillColor(250, 250, 252);
+        doc.setDrawColor(180, 180, 200);
         doc.setLineWidth(0.4);
-        doc.roundedRect(x, startY, boxW, boxH, 2, 2, 'FD');
-        // Value
+        doc.roundedRect(x, boxY, boxW, boxH, 2, 2, 'FD');
+
+        // Big number — black
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.setTextColor(r, g, b);
-        doc.text(String(val), x + boxW / 2, startY + 9.5, { align: 'center' });
-        // Label
+        doc.setFontSize(16);
+        doc.setTextColor(15, 15, 15);
+        doc.text(String(val), x + boxW / 2, boxY + 10.5, { align: 'center' });
+
+        // Label — dark gray
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(6.5);
-        doc.setTextColor(180, 160, 210);
-        doc.text(label, x + boxW / 2, startY + 14.5, { align: 'center' });
+        doc.setFontSize(7);
+        doc.setTextColor(90, 90, 110);
+        doc.text(label.toUpperCase(), x + boxW / 2, boxY + 16.5, { align: 'center' });
       });
 
-      // ── Section title ────────────────────────────────────────
+      // ── Section label ─────────────────────────────────────────
       doc.setFont('helvetica', 'bold');
-      doc.setFontSize(9);
-      doc.setTextColor(168, 85, 247);
-      doc.text('REGISTRATION DETAILS', 8, 51);
-      doc.setDrawColor(168, 85, 247);
-      doc.setLineWidth(0.3);
-      doc.line(8, 53, pageW - 8, 53);
+      doc.setFontSize(8);
+      doc.setTextColor(80, 20, 180);
+      doc.text('REGISTRATION DETAILS', 12, 58);
+      doc.setDrawColor(180, 160, 220);
+      doc.setLineWidth(0.25);
+      doc.line(12, 60, pageW - 12, 60);
 
-      // ── Table ────────────────────────────────────────────────
-      window.jspdf.jsPDF.autoTable && window.jspdf.jsPDF.autoTable(doc, {});
-
+      // ── Table ─────────────────────────────────────────────────
       doc.autoTable({
-        startY: 56,
-        head: [['#', 'Name', 'Gender', 'Phone No', 'WhatsApp', 'Email', 'Preference', 'Message', 'Registered Date']],
+        startY: 63,
+        margin: { left: 12, right: 12 },
+        head: [['No', 'Name', 'Gender', 'Phone No', 'WhatsApp', 'Email', 'Preference', 'Message', 'Registered Date']],
         body: filtered.map((row, i) => [
           i + 1,
           row.name,
@@ -184,7 +188,7 @@ export default function AdminPanel() {
           row.email || '—',
           row.updatePreference,
           row.message
-            ? (row.message.length > 55 ? row.message.slice(0, 52) + '...' : row.message)
+            ? (row.message.length > 60 ? row.message.slice(0, 57) + '...' : row.message)
             : '—',
           formatDate(row.registeredDate),
         ]),
@@ -192,65 +196,57 @@ export default function AdminPanel() {
         styles: {
           font: 'helvetica',
           fontSize: 7.5,
-          cellPadding: { top: 3, bottom: 3, left: 3, right: 3 },
-          textColor: [210, 210, 225],
-          fillColor: [16, 13, 28],
-          lineColor: [45, 30, 70],
+          cellPadding: { top: 3.5, bottom: 3.5, left: 3, right: 3 },
+          textColor: [15, 15, 15],        // black text
+          fillColor: [255, 255, 255],     // white rows
+          lineColor: [190, 190, 205],     // light gray borders
           lineWidth: 0.25,
           overflow: 'linebreak',
+          valign: 'middle',
         },
         headStyles: {
-          fillColor: [35, 18, 60],
-          textColor: [168, 85, 247],
+          fillColor: [90, 35, 185],       // purple header
+          textColor: [255, 255, 255],     // white text on header
           fontStyle: 'bold',
           fontSize: 8,
           halign: 'left',
-          lineColor: [80, 40, 130],
-          lineWidth: 0.4,
+          lineColor: [65, 15, 150],
+          lineWidth: 0.3,
         },
         alternateRowStyles: {
-          fillColor: [20, 16, 34],
+          fillColor: [248, 246, 255],     // very light lavender stripe
         },
         columnStyles: {
-          0: { cellWidth: 8, halign: 'center', textColor: [100, 100, 130] },
-          1: { cellWidth: 30, fontStyle: 'bold', textColor: [240, 240, 255] },
+          0: { cellWidth: 10, halign: 'center', textColor: [90, 90, 110] },
+          1: { cellWidth: 28, fontStyle: 'bold', textColor: [10, 10, 10] },
           2: { cellWidth: 18, halign: 'center' },
-          3: { cellWidth: 25 },
-          4: { cellWidth: 25 },
-          5: { cellWidth: 38 },
+          3: { cellWidth: 24 },
+          4: { cellWidth: 24 },
+          5: { cellWidth: 40 },
           6: { cellWidth: 20, halign: 'center' },
-          7: { cellWidth: 52 },
-          8: { cellWidth: 37 },
-        },
-        willDrawCell: (hookData) => {
-          // Color gender text
-          if (hookData.section === 'body' && hookData.column.index === 2) {
-            const val = hookData.cell.raw;
-            if (val === 'Male') hookData.cell.styles.textColor = [96, 165, 250];
-            else if (val === 'Female') hookData.cell.styles.textColor = [236, 72, 153];
-          }
-          // Color preference text
-          if (hookData.section === 'body' && hookData.column.index === 6) {
-            hookData.cell.styles.textColor = [168, 85, 247];
-          }
+          7: { cellWidth: 'auto' },
+          8: { cellWidth: 36 },
         },
         didDrawPage: () => {
-          // Footer on every page
+          // White footer
+          doc.setFillColor(255, 255, 255);
+          doc.rect(0, pageH - 10, pageW, 10, 'F');
+          doc.setDrawColor(210, 210, 220);
+          doc.setLineWidth(0.25);
+          doc.line(12, pageH - 10, pageW - 12, pageH - 10);
+
           const pageCount = doc.internal.getNumberOfPages();
           const currentPage = doc.internal.getCurrentPageInfo().pageNumber;
-
-          doc.setFillColor(12, 12, 24);
-          doc.rect(0, pageH - 10, pageW, 10, 'F');
-
           doc.setFont('helvetica', 'normal');
           doc.setFontSize(7);
-          doc.setTextColor(100, 100, 130);
-          doc.text('Renew Worship — Confidential', 8, pageH - 3.5);
-          doc.text(
-            `Page ${currentPage} of ${pageCount}`,
-            pageW / 2, pageH - 3.5, { align: 'center' }
-          );
-          doc.text(now, pageW - 8, pageH - 3.5, { align: 'right' });
+          doc.setTextColor(130, 130, 150);
+          doc.text('Renew Worship — Registration Report', 12, pageH - 4);
+          doc.text(`Page ${currentPage} of ${pageCount}`, pageW / 2, pageH - 4, { align: 'center' });
+          doc.text(now, pageW - 12, pageH - 4, { align: 'right' });
+
+          // Bottom purple stripe
+          doc.setFillColor(109, 40, 217);
+          doc.rect(0, pageH - 2, pageW, 2, 'F');
         },
       });
 
