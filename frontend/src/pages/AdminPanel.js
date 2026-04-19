@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback  } from 'react';
 import axios from 'axios';
 
 export default function AdminPanel() {
@@ -20,7 +20,7 @@ export default function AdminPanel() {
     }
   };
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => { 
     try {
       setLoading(true);
       const res = await axios.get('https://renew-worship-backend.onrender.com/api/admin/registrations', {
@@ -34,7 +34,7 @@ export default function AdminPanel() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     if (token) fetchData();
